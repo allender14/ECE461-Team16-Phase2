@@ -347,7 +347,3 @@ async function fetchGitHubInfo(npmPackageUrl: string, personalAccessToken: strin
 }
 
 export { fetchGitHubInfo, readLines, countLinesInFile };
-
-
-
-
