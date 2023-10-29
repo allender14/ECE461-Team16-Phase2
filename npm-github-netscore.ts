@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { calculate_net_score } from './metrics'
 import { infoLogger, debugLogger } from './logger';
+import { Octokit } from "@octokit/rest";
 import { log } from 'console';
 
 const perPage = 100; // Number of contributors per page, GitHub API maximum is 100
@@ -48,6 +49,60 @@ export async function countLinesInFile(filePath: string): Promise<number> {
     });
   });
 }
+
+export async function getReviewedPercentage(owner: string, repo: string, personalAccessToken: string): Promise<number> {
+  const octokit = new Octokit({ auth: personalAccessToken });
+
+  try {
+    const response = await octokit.pulls.list({
+      owner,
+      repo,
+      state: "all",
+    });
+
+    let reviewedLines = 0;
+    let totalLines = 0;
+
+    await Promise.all(response.data.map(async (pullRequest) => {
+      const reviewsResponse = await octokit.pulls.listReviews({
+        owner,
+        repo,
+        pull_number: pullRequest.number,
+      });
+
+      const isReviewed = reviewsResponse.data.some(review => review.state === "APPROVED");
+
+      if (isReviewed) {
+        const filesResponse = await octokit.pulls.listFiles({
+          owner,
+          repo,
+          pull_number: pullRequest.number,
+        });
+
+        for (const file of filesResponse.data) {
+          reviewedLines += file.changes;
+        }
+      }
+
+      const prResponse = await octokit.pulls.get({
+        owner,
+        repo,
+        pull_number: pullRequest.number,
+      });
+
+      totalLines += prResponse.data.additions;
+    }));
+
+    const totalPullRequests = response.data.length;
+    const reviewedPullRequests = reviewedLines > 0 ? 1 : 0; // Assuming at least one line is reviewed
+
+    return (reviewedLines / totalLines) * 100;
+  } catch (error) {
+    console.error(`Error fetching reviewed lines percentage: ${error.message}`);
+    throw error;
+  }
+}
+
 async function getCommitsPerContributor(getUsername: string, repositoryName: string, personalAccessToken: string) {
   try {
     const query = `
@@ -377,11 +432,11 @@ export async function fetchGitHubInfo(npmPackageUrl: string, personalAccessToken
       const totalLines = await traverseDirectory(rootDirectory);
       const total_lines = totalLines[1] - totalLines[0];
       const { pinned_dependencies, total_dependencies } = await getPinnedDependencies(githubInfo.username, githubInfo.repository);
-      const reviewed_lines = 1;      //
+      const reviewed_percentage = await getReviewedPercentage(githubInfo.username, githubInfo.repository, personalAccessToken);
 
       //calculate netscore and all metrics
       const scores = await calculate_net_score(contributor_commits, total_lines, issue_count, totalLines[0], repolicense, 
-        days_since_last_commit, npmPackageUrl, pinned_dependencies, total_dependencies, reviewed_lines);
+        days_since_last_commit, npmPackageUrl, pinned_dependencies, total_dependencies, reviewed_percentage);
       return scores;
     }
   } catch (error) {

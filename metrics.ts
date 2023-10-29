@@ -160,18 +160,10 @@ export async function calculate_dependence(pinned_dependencies: number, total_de
     return pinned_dependencies / total_dependencies;
 }
 
-export async function calculated_reviewed_code(lines_of_code: number, reviewed_lines: number) {
-    if (lines_of_code == 0){
-        return 0;
-    }
-    
-    return reviewed_lines / lines_of_code;
-}
-
 //Net_Score
 export async function calculate_net_score(contributor_commits: number[], lines_of_code: number, num_issues: number, 
     lines_of_readme: number, license_type: string, days_since_last_commit: number, npmPackageUrl: string, 
-    pinned_dependencies: number, total_dependencies: number, reviewed_lines: number) {
+    pinned_dependencies: number, total_dependencies: number, reviewed_percentage: number) {
     
     const bus_factor = await calculate_bus_factor(contributor_commits);
     const correctness = await calculate_correctness(lines_of_code, num_issues);
@@ -179,10 +171,9 @@ export async function calculate_net_score(contributor_commits: number[], lines_o
     const license = await calculate_license(license_type);
     const responsiveness = await calculate_responsiveness(days_since_last_commit);
     const dependence = await calculate_dependence(pinned_dependencies, total_dependencies);
-    const reviewed_code = await calculated_reviewed_code(lines_of_code, reviewed_lines);
 
     const net_score = 0.05 * bus_factor + 0.15 * correctness + 0.15 * ramp_up_time + 0.1 * license + 0.3 * responsiveness + 
-        0.1 * dependence + 0.15 * reviewed_code;
+        0.1 * dependence + 0.15 * reviewed_percentage;
 
     //return each const metric score and net score
     // const  NET_SCORE: number = (Math.floor(net_score / 5 * 10000) / 10000); 
@@ -214,7 +205,7 @@ export async function calculate_net_score(contributor_commits: number[], lines_o
         RESPONSIVE_MAINTAINER_SCORE: Math.floor(responsiveness * 10000) / 10000,
         LICENSE_SCORE: Math.floor(license * 10000) / 10000,
         DEPENDENCE_SCORE: Math.floor(dependence * 10000) / 10000,
-        REVIEWED_CODE_SCORE: Math.floor(reviewed_code * 10000) / 10000
+        REVIEWED_CODE_SCORE: Math.floor(reviewed_percentage * 10000) / 10000
       }));
     //console.log(`${printign}`);
     //process.stdout.write(printign);
