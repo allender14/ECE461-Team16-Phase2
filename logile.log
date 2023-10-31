@@ -22,3 +22,9 @@
 2023-10-31T19:09:58.995Z [DEBUG] debug: Error: Error fetching commits per contributor: 502 - Bad Gateway
 2023-10-31T19:20:08.254Z [DEBUG] debug: Error: Request failed with status code 502
 2023-10-31T19:25:32.901Z [DEBUG] debug: Error: Request failed with status code 502
+2023-10-31T20:25:04.877Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:31:52.336Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:37:46.497Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:43:42.392Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:47:42.158Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:58:47.665Z [DEBUG] debug: Error: You have exceeded a secondary rate limit. Please wait a few minutes before you try again. If you reach out to GitHub Support for help, please include the request ID CED8:12C9:5B966F1:BC3D2A7:65416A87.

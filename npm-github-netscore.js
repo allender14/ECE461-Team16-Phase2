@@ -36,18 +36,23 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.countLinesInFile = exports.readLines = exports.fetchGitHubInfo = exports.getCommitsPerContributor = void 0;
+exports.fetchGitHubInfo = exports.getReviewedPercentage = exports.countLinesInFile = exports.readLines = void 0;
+var axios = require('axios');
 var util = require('util');
 var exec = util.promisify(require('child_process').exec);
 var fs = require("fs");
 var path = require("path");
-var configDotenv = require("dotenv");
 var metrics_1 = require("./metrics");
 var logger_1 = require("./logger");
-var axios_1 = require("axios");
-configDotenv.config();
+var rest_1 = require("@octokit/rest");
 var perPage = 100; // Number of contributors per page, GitHub API maximum is 100
 var perPage1 = 1; // We only need the latest commit
+// Define your rate limiting constants.
+var MAX_REQUESTS_PER_HOUR = 5000; // GitHub GraphQL API limit for most authenticated users
+var REQUESTS_PER_MINUTE = 30; // A safe request rate
+// A simple rate limiting queue to control the request rate.
+var requestQueue = [];
+var isProcessing = false;
 function logBasedOnVerbosity(message, verbosity) {
     var logLevel = process.env.LOG_LEVEL ? parseInt(process.env.LOG_LEVEL) : 0;
     if (verbosity == logLevel) {
@@ -94,12 +99,79 @@ function countLinesInFile(filePath) {
     });
 }
 exports.countLinesInFile = countLinesInFile;
-// Define your rate limiting constants.
-var MAX_REQUESTS_PER_HOUR = 5000; // GitHub GraphQL API limit for most authenticated users
-var REQUESTS_PER_MINUTE = 30; // A safe request rate
-// A simple rate limiting queue to control the request rate.
-var requestQueue = [];
-var isProcessing = false;
+function getReviewedPercentage(owner, repo, personalAccessToken) {
+    return __awaiter(this, void 0, void 0, function () {
+        var octokit, response, reviewedLines_1, totalLines_1, totalPullRequests, reviewedPullRequests, error_1;
+        var _this = this;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    octokit = new rest_1.Octokit({ auth: personalAccessToken });
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
+                    return [4 /*yield*/, octokit.pulls.list({
+                            owner: owner,
+                            repo: repo,
+                            state: 'all',
+                        })];
+                case 2:
+                    response = _a.sent();
+                    reviewedLines_1 = 0;
+                    totalLines_1 = 0;
+                    return [4 /*yield*/, Promise.all(response.data.map(function (pullRequest) { return __awaiter(_this, void 0, void 0, function () {
+                            var reviewsResponse, isReviewed, filesResponse, _i, _a, file, prResponse;
+                            return __generator(this, function (_b) {
+                                switch (_b.label) {
+                                    case 0: return [4 /*yield*/, octokit.pulls.listReviews({
+                                            owner: owner,
+                                            repo: repo,
+                                            pull_number: pullRequest.number,
+                                        })];
+                                    case 1:
+                                        reviewsResponse = _b.sent();
+                                        isReviewed = reviewsResponse.data.some(function (review) { return review.state === 'APPROVED'; });
+                                        if (!isReviewed) return [3 /*break*/, 3];
+                                        return [4 /*yield*/, octokit.pulls.listFiles({
+                                                owner: owner,
+                                                repo: repo,
+                                                pull_number: pullRequest.number,
+                                            })];
+                                    case 2:
+                                        filesResponse = _b.sent();
+                                        for (_i = 0, _a = filesResponse.data; _i < _a.length; _i++) {
+                                            file = _a[_i];
+                                            reviewedLines_1 += file.changes;
+                                        }
+                                        _b.label = 3;
+                                    case 3: return [4 /*yield*/, octokit.pulls.get({
+                                            owner: owner,
+                                            repo: repo,
+                                            pull_number: pullRequest.number,
+                                        })];
+                                    case 4:
+                                        prResponse = _b.sent();
+                                        totalLines_1 += prResponse.data.additions;
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); }))];
+                case 3:
+                    _a.sent();
+                    totalPullRequests = response.data.length;
+                    reviewedPullRequests = reviewedLines_1 > 0 ? 1 : 0 // Assuming at least one line is reviewed
+                    ;
+                    return [2 /*return*/, (reviewedLines_1 / totalLines_1) * 100];
+                case 4:
+                    error_1 = _a.sent();
+                    console.error("Error fetching reviewed lines percentage: ".concat(error_1.message));
+                    throw error_1;
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.getReviewedPercentage = getReviewedPercentage;
 function processQueue() {
     return __awaiter(this, void 0, void 0, function () {
         var request;
@@ -126,7 +198,7 @@ function processQueue() {
 function getCommitsPerContributor(getUsername, repositoryName, personalAccessToken) {
     var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function () {
-        var apiUrl, query, variables, response, refs, commitsPerContributor, _i, refs_1, ref, commits, _e, commits_1, commit, contributor, error_1;
+        var apiUrl, query, variables, response, refs, commitsPerContributor, _i, refs_1, ref, commits, _e, commits_1, commit, contributor, commitCountsArray, error_2;
         return __generator(this, function (_f) {
             switch (_f.label) {
                 case 0:
@@ -142,7 +214,7 @@ function getCommitsPerContributor(getUsername, repositoryName, personalAccessTok
                 case 1:
                     _f.sent();
                     _f.label = 2;
-                case 2: return [4 /*yield*/, axios_1.default.post(apiUrl, {
+                case 2: return [4 /*yield*/, axios.post(apiUrl, {
                         query: query,
                         variables: variables,
                     }, {
@@ -172,34 +244,34 @@ function getCommitsPerContributor(getUsername, repositoryName, personalAccessTok
                             }
                         }
                     }
+                    commitCountsArray = Object.values(commitsPerContributor);
                     // Implement rate limiting: Allow the next request to proceed.
                     processQueue();
-                    return [2 /*return*/, commitsPerContributor];
+                    return [2 /*return*/, commitCountsArray];
                 case 4:
-                    error_1 = _f.sent();
-                    throw error_1;
+                    error_2 = _f.sent();
+                    throw error_2;
                 case 5: return [2 /*return*/];
             }
         });
     });
 }
-exports.getCommitsPerContributor = getCommitsPerContributor;
 function getLatestCommit(getUsername, repositoryName) {
     return __awaiter(this, void 0, void 0, function () {
-        var commitsUrl, latestCommitResponse, latestCommit, error_2;
+        var commitsUrl, latestCommitResponse, latestCommit, error_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
                     commitsUrl = "https://api.github.com/repos/".concat(getUsername, "/").concat(repositoryName, "/commits?per_page=").concat(perPage1);
-                    return [4 /*yield*/, axios_1.default.get(commitsUrl)];
+                    return [4 /*yield*/, axios.get(commitsUrl)];
                 case 1:
                     latestCommitResponse = _a.sent();
                     latestCommit = latestCommitResponse.data[0];
                     return [2 /*return*/, latestCommit];
                 case 2:
-                    error_2 = _a.sent();
-                    logBasedOnVerbosity("Error fetching latest commit: ".concat(error_2), 2);
+                    error_3 = _a.sent();
+                    logBasedOnVerbosity("Error fetching latest commit: ".concat(error_3), 2);
                     process.exit(1);
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -210,7 +282,7 @@ function getLatestCommit(getUsername, repositoryName) {
 function getTimeSinceLastCommit(getUsername, repositoryName, axiosConfig) {
     var _a;
     return __awaiter(this, void 0, void 0, function () {
-        var latestCommit, lastCommitDate, currentDate, timeSinceLastCommitInMilliseconds, days, error_3;
+        var latestCommit, lastCommitDate, currentDate, timeSinceLastCommitInMilliseconds, days, error_4;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -228,10 +300,59 @@ function getTimeSinceLastCommit(getUsername, repositoryName, axiosConfig) {
                     days = Math.floor(timeSinceLastCommitInMilliseconds / (1000 * 60 * 60 * 24));
                     return [2 /*return*/, days]; // Return the number of days
                 case 2:
-                    error_3 = _b.sent();
-                    logBasedOnVerbosity("Error calculating time since last commit: ".concat(error_3), 2);
+                    error_4 = _b.sent();
+                    logBasedOnVerbosity("Error calculating time since last commit: ".concat(error_4), 2);
                     process.exit(1);
                     return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+}
+function getPinnedDependencies(username, repository) {
+    return __awaiter(this, void 0, void 0, function () {
+        var apiUrl, response, packageJson, dependencies, pinned_dependencies, total_dependencies, _i, _a, _b, dependency, version, major, minor, dot, error_5;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    _c.trys.push([0, 2, , 3]);
+                    apiUrl = "https://api.github.com/repos/".concat(username, "/").concat(repository, "/contents/package.json");
+                    return [4 /*yield*/, axios.get(apiUrl, {
+                            headers: {
+                                Accept: 'application/vnd.github.v3.raw',
+                            },
+                        })];
+                case 1:
+                    response = _c.sent();
+                    packageJson = response.data;
+                    dependencies = packageJson.dependencies || {};
+                    pinned_dependencies = 0;
+                    total_dependencies = Object.keys(dependencies).length;
+                    for (_i = 0, _a = Object.entries(dependencies); _i < _a.length; _i++) {
+                        _b = _a[_i], dependency = _b[0], version = _b[1];
+                        major = void 0;
+                        minor = void 0;
+                        dot = version.indexOf('.');
+                        if (dot <= 0 || dot > 2) {
+                            major = 'x';
+                            minor = 'x';
+                        }
+                        else {
+                            major = version[dot - 1];
+                            minor = version[dot + 1];
+                        }
+                        // Check if the version is a valid pinned version
+                        if (!isNaN(parseInt(major, 10)) &&
+                            !isNaN(parseInt(minor, 10)) &&
+                            !version.startsWith('^')) {
+                            pinned_dependencies++;
+                        }
+                    }
+                    return [2 /*return*/, { pinned_dependencies: pinned_dependencies, total_dependencies: total_dependencies }];
+                case 2:
+                    error_5 = _c.sent();
+                    console.error("Error counting pinned dependencies: ".concat(error_5.message));
+                    throw error_5;
                 case 3: return [2 /*return*/];
             }
         });
@@ -240,7 +361,7 @@ function getTimeSinceLastCommit(getUsername, repositoryName, axiosConfig) {
 function extractGitHubInfo(npmPackageUrl) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function () {
-        var githubUrlPattern, npmUrlPattern, npmUrlMatch, packageName, apiUrl, response, repositoryUrl, githubUrlMatch, username, repository, urlParts, username, repository, githubUrlMatch, username, repository, urlParts, username, repository, error_4;
+        var githubUrlPattern, npmUrlPattern, npmUrlMatch, packageName, apiUrl, response, repositoryUrl, githubUrlMatch, username, repository, urlParts, username, repository, githubUrlMatch, username, repository, urlParts, username, repository, error_6;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
@@ -258,7 +379,7 @@ function extractGitHubInfo(npmPackageUrl) {
                     console.log('Package Name: ' + packageName);
                     apiUrl = "https://registry.npmjs.org/".concat(packageName);
                     console.log('APIurl: ' + apiUrl);
-                    return [4 /*yield*/, axios_1.default.get(apiUrl)];
+                    return [4 /*yield*/, axios.get(apiUrl)];
                 case 1:
                     response = _c.sent();
                     repositoryUrl = (_b = (_a = response.data) === null || _a === void 0 ? void 0 : _a.repository) === null || _b === void 0 ? void 0 : _b.url;
@@ -309,8 +430,8 @@ function extractGitHubInfo(npmPackageUrl) {
                     _c.label = 3;
                 case 3: return [3 /*break*/, 5];
                 case 4:
-                    error_4 = _c.sent();
-                    logBasedOnVerbosity("Error extracting GitHub info: ".concat(error_4.message), 2);
+                    error_6 = _c.sent();
+                    logBasedOnVerbosity("Error extracting GitHub info: ".concat(error_6.message), 2);
                     process.exit(1);
                     return [3 /*break*/, 5];
                 case 5: return [2 /*return*/];
@@ -320,7 +441,7 @@ function extractGitHubInfo(npmPackageUrl) {
 }
 function cloneREPO(username, repository) {
     return __awaiter(this, void 0, void 0, function () {
-        var repoUrl, destinationPath, cloneCommand, _a, stdout, stderr, error_5;
+        var repoUrl, destinationPath, cloneCommand, _a, stdout, stderr, error_7;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -333,8 +454,8 @@ function cloneREPO(username, repository) {
                     _a = _b.sent(), stdout = _a.stdout, stderr = _a.stderr;
                     return [3 /*break*/, 3];
                 case 2:
-                    error_5 = _b.sent();
-                    logBasedOnVerbosity("Error cloning repository: ".concat(error_5.message), 2);
+                    error_7 = _b.sent();
+                    logBasedOnVerbosity("Error cloning repository: ".concat(error_7.message), 2);
                     process.exit(1);
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -411,15 +532,15 @@ function countLines(filePath) {
 }
 function fetchGitHubInfo(npmPackageUrl, personalAccessToken) {
     return __awaiter(this, void 0, void 0, function () {
-        var githubInfo, headers, axiosConfig, url, response, days_since_last_commit, issue_count, contributor_commits, repolicense, license, rootDirectory, totalLines, total_lines, scores, error_6;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var githubInfo, headers, axiosConfig, url, response, days_since_last_commit, repolicense, issue_count, contributor_commits, license, rootDirectory, totalLines, total_lines, _a, pinned_dependencies, total_dependencies, reviewed_percentage, scores, error_8;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
-                    _a.trys.push([0, 10, , 11]);
+                    _b.trys.push([0, 11, , 12]);
                     return [4 /*yield*/, extractGitHubInfo(npmPackageUrl)];
                 case 1:
-                    githubInfo = _a.sent();
-                    if (!githubInfo) return [3 /*break*/, 9];
+                    githubInfo = _b.sent();
+                    if (!githubInfo) return [3 /*break*/, 10];
                     headers = {
                         Authorization: "Bearer ".concat(personalAccessToken),
                     };
@@ -429,58 +550,67 @@ function fetchGitHubInfo(npmPackageUrl, personalAccessToken) {
                     console.log('Github Username:' + githubInfo.username);
                     console.log('Github Repo:' + githubInfo.repository);
                     url = "https://api.github.com/repos/".concat(githubInfo.username, "/").concat(githubInfo.repository);
-                    return [4 /*yield*/, axios_1.default.get(url, axiosConfig)
+                    return [4 /*yield*/, axios.get(url, axiosConfig)
                         //gather info
                     ];
                 case 2:
-                    response = _a.sent();
+                    response = _b.sent();
                     //gather info
                     return [4 /*yield*/, cloneREPO(githubInfo.username, githubInfo.repository)];
                 case 3:
                     //gather info
-                    _a.sent();
+                    _b.sent();
                     return [4 /*yield*/, getTimeSinceLastCommit(githubInfo.username, githubInfo.repository, axiosConfig)];
                 case 4:
-                    days_since_last_commit = (_a.sent());
+                    days_since_last_commit = (_b.sent());
                     console.log('days since last commit: ' + days_since_last_commit);
+                    repolicense = 'unlicense';
                     issue_count = response.data.open_issues_count;
                     return [4 /*yield*/, getCommitsPerContributor(githubInfo.username, githubInfo.repository, personalAccessToken)];
                 case 5:
-                    contributor_commits = _a.sent();
-                    if (!(contributor_commits === null)) return [3 /*break*/, 6];
-                    // Handle the error, e.g., log an error message or take appropriate action
-                    console.error('Error fetching commits per contributor');
-                    return [3 /*break*/, 9];
-                case 6:
-                    repolicense = 'unlicense';
-                    if (response.data.license) {
-                        license = response.data.license;
-                        if (license.key) {
-                            repolicense = license.key;
-                        }
-                        else {
-                            logBasedOnVerbosity('No license type found for this repository.', 1);
-                        }
+                    contributor_commits = _b.sent();
+                    if (contributor_commits === null) {
+                        // Handle the error, e.g., log an error message or take appropriate action
+                        console.error('Error fetching commits per contributor');
                     }
                     else {
-                        logBasedOnVerbosity('No license information found for this repository. Continuing as Unlicensed.', 1);
+                        if (response.data.license) {
+                            license = response.data.license;
+                            if (license.key) {
+                                repolicense = license.key;
+                            }
+                            else {
+                                logBasedOnVerbosity('No license type found for this repository.', 1);
+                            }
+                        }
+                        else {
+                            logBasedOnVerbosity('No license information found for this repository. Continuing as Unlicensed.', 1);
+                        }
                     }
                     rootDirectory = "./cli_storage/".concat(githubInfo.repository);
                     return [4 /*yield*/, traverseDirectory(rootDirectory)];
-                case 7:
-                    totalLines = _a.sent();
+                case 6:
+                    totalLines = _b.sent();
                     total_lines = totalLines[1] - totalLines[0];
-                    return [4 /*yield*/, (0, metrics_1.calculate_net_score)(contributor_commits, total_lines, issue_count, totalLines[0], repolicense, days_since_last_commit, npmPackageUrl)];
+                    return [4 /*yield*/, getPinnedDependencies(githubInfo.username, githubInfo.repository)];
+                case 7:
+                    _a = _b.sent(), pinned_dependencies = _a.pinned_dependencies, total_dependencies = _a.total_dependencies;
+                    return [4 /*yield*/, getReviewedPercentage(githubInfo.username, githubInfo.repository, personalAccessToken)
+                        //calculate netscore and all metrics
+                    ];
                 case 8:
-                    scores = _a.sent();
+                    reviewed_percentage = _b.sent();
+                    return [4 /*yield*/, (0, metrics_1.calculate_net_score)(contributor_commits, total_lines, issue_count, totalLines[0], repolicense, days_since_last_commit, npmPackageUrl, pinned_dependencies, total_dependencies, reviewed_percentage)];
+                case 9:
+                    scores = _b.sent();
                     return [2 /*return*/, scores];
-                case 9: return [3 /*break*/, 11];
-                case 10:
-                    error_6 = _a.sent();
-                    logBasedOnVerbosity("Error: ".concat(error_6.message), 2);
+                case 10: return [3 /*break*/, 12];
+                case 11:
+                    error_8 = _b.sent();
+                    logBasedOnVerbosity("Error: ".concat(error_8.message), 2);
                     process.exit(1);
-                    return [3 /*break*/, 11];
-                case 11: return [2 /*return*/];
+                    return [3 /*break*/, 12];
+                case 12: return [2 /*return*/];
             }
         });
     });

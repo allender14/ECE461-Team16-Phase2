@@ -1,17 +1,24 @@
+const axios = require('axios')
 const util = require('util')
 const exec = util.promisify(require('child_process').exec)
 import * as fs from 'fs'
 import * as path from 'path'
-import * as configDotenv from 'dotenv'
 import {calculate_net_score} from './metrics'
 import {infoLogger, debugLogger} from './logger'
+import {Octokit} from '@octokit/rest'
 import {log} from 'console'
-import axios from 'axios'
-
-configDotenv.config()
+import * as configDotenv from 'dotenv'
 
 const perPage = 100 // Number of contributors per page, GitHub API maximum is 100
 const perPage1 = 1 // We only need the latest commit
+
+// Define your rate limiting constants.
+const MAX_REQUESTS_PER_HOUR = 5000 // GitHub GraphQL API limit for most authenticated users
+const REQUESTS_PER_MINUTE = 30 // A safe request rate
+
+// A simple rate limiting queue to control the request rate.
+const requestQueue: (() => void)[] = []
+let isProcessing = false
 
 function logBasedOnVerbosity(message: string, verbosity: number) {
   const logLevel = process.env.LOG_LEVEL ? parseInt(process.env.LOG_LEVEL) : 0
@@ -25,7 +32,7 @@ function logBasedOnVerbosity(message: string, verbosity: number) {
   }
 }
 
-async function readLines(filePath: string): Promise<string[]> {
+export async function readLines(filePath: string): Promise<string[]> {
   const fileContents = fs.readFileSync(filePath, 'utf-8')
   const decodedURLs: string[] = []
 
@@ -37,7 +44,7 @@ async function readLines(filePath: string): Promise<string[]> {
   return decodedURLs
 }
 
-async function countLinesInFile(filePath: string): Promise<number> {
+export async function countLinesInFile(filePath: string): Promise<number> {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
@@ -51,13 +58,66 @@ async function countLinesInFile(filePath: string): Promise<number> {
   })
 }
 
-// Define your rate limiting constants.
-const MAX_REQUESTS_PER_HOUR = 5000 // GitHub GraphQL API limit for most authenticated users
-const REQUESTS_PER_MINUTE = 30 // A safe request rate
+export async function getReviewedPercentage(
+  owner: string,
+  repo: string,
+  personalAccessToken: string,
+): Promise<number> {
+  const octokit = new Octokit({auth: personalAccessToken})
 
-// A simple rate limiting queue to control the request rate.
-const requestQueue: (() => void)[] = []
-let isProcessing = false
+  try {
+    const response = await octokit.pulls.list({
+      owner,
+      repo,
+      state: 'all',
+    })
+
+    let reviewedLines = 0
+    let totalLines = 0
+
+    await Promise.all(
+      response.data.map(async (pullRequest) => {
+        const reviewsResponse = await octokit.pulls.listReviews({
+          owner,
+          repo,
+          pull_number: pullRequest.number,
+        })
+
+        const isReviewed = reviewsResponse.data.some(
+          (review) => review.state === 'APPROVED',
+        )
+
+        if (isReviewed) {
+          const filesResponse = await octokit.pulls.listFiles({
+            owner,
+            repo,
+            pull_number: pullRequest.number,
+          })
+
+          for (const file of filesResponse.data) {
+            reviewedLines += file.changes
+          }
+        }
+
+        const prResponse = await octokit.pulls.get({
+          owner,
+          repo,
+          pull_number: pullRequest.number,
+        })
+
+        totalLines += prResponse.data.additions
+      }),
+    )
+
+    const totalPullRequests = response.data.length
+    const reviewedPullRequests = reviewedLines > 0 ? 1 : 0 // Assuming at least one line is reviewed
+
+    return (reviewedLines / totalLines) * 100
+  } catch (error) {
+    console.error(`Error fetching reviewed lines percentage: ${error.message}`)
+    throw error
+  }
+}
 
 async function processQueue() {
   if (requestQueue.length > 0 && !isProcessing) {
@@ -71,11 +131,11 @@ async function processQueue() {
   }
 }
 
-export async function getCommitsPerContributor(
+async function getCommitsPerContributor(
   getUsername: string,
   repositoryName: string,
   personalAccessToken: string,
-) {
+): Promise<number[]> {
   try {
     const apiUrl = 'https://api.github.com/graphql'
 
@@ -155,10 +215,10 @@ export async function getCommitsPerContributor(
       }
     }
 
+    const commitCountsArray: number[] = Object.values(commitsPerContributor)
     // Implement rate limiting: Allow the next request to proceed.
     processQueue()
-
-    return commitsPerContributor
+    return commitCountsArray
   } catch (error) {
     throw error
   }
@@ -206,6 +266,51 @@ async function getTimeSinceLastCommit(
   } catch (error) {
     logBasedOnVerbosity(`Error calculating time since last commit: ${error}`, 2)
     process.exit(1)
+  }
+}
+
+async function getPinnedDependencies(username, repository) {
+  try {
+    const apiUrl = `https://api.github.com/repos/${username}/${repository}/contents/package.json`
+    const response = await axios.get(apiUrl, {
+      headers: {
+        Accept: 'application/vnd.github.v3.raw',
+      },
+    })
+
+    const packageJson = response.data
+    const dependencies = packageJson.dependencies || {}
+
+    let pinned_dependencies = 0
+    const total_dependencies = Object.keys(dependencies).length
+
+    for (const [dependency, version] of Object.entries(dependencies)) {
+      let major: string
+      let minor: string
+
+      const dot = (version as string).indexOf('.')
+      if (dot <= 0 || dot > 2) {
+        major = 'x'
+        minor = 'x'
+      } else {
+        major = (version as string)[dot - 1]
+        minor = (version as string)[dot + 1]
+      }
+
+      // Check if the version is a valid pinned version
+      if (
+        !isNaN(parseInt(major, 10)) &&
+        !isNaN(parseInt(minor, 10)) &&
+        !(version as string).startsWith('^')
+      ) {
+        pinned_dependencies++
+      }
+    }
+
+    return {pinned_dependencies, total_dependencies}
+  } catch (error) {
+    console.error(`Error counting pinned dependencies: ${error.message}`)
+    throw error
   }
 }
 
@@ -361,7 +466,7 @@ function countLines(filePath: string): number {
   }
 }
 
-async function fetchGitHubInfo(
+export async function fetchGitHubInfo(
   npmPackageUrl: string,
   personalAccessToken: string,
 ) {
@@ -389,6 +494,7 @@ async function fetchGitHubInfo(
         axiosConfig,
       )) as number
       console.log('days since last commit: ' + days_since_last_commit)
+      let repolicense: string = 'unlicense'
       const issue_count: number = response.data.open_issues_count
       const contributor_commits = await getCommitsPerContributor(
         githubInfo.username,
@@ -400,7 +506,6 @@ async function fetchGitHubInfo(
         // Handle the error, e.g., log an error message or take appropriate action
         console.error('Error fetching commits per contributor')
       } else {
-        let repolicense: string = 'unlicense'
         if (response.data.license) {
           const license = response.data.license
           if (license.key) {
@@ -414,28 +519,36 @@ async function fetchGitHubInfo(
             1,
           )
         }
-        const rootDirectory = `./cli_storage/${githubInfo.repository}`
-        const totalLines = await traverseDirectory(rootDirectory)
-        const total_lines = totalLines[1] - totalLines[0]
-
-        //calculate netscore and all metrics
-        const scores = await calculate_net_score(
-          contributor_commits,
-          total_lines,
-          issue_count,
-          totalLines[0],
-          repolicense,
-          days_since_last_commit,
-          npmPackageUrl,
-        )
-
-        return scores
       }
+
+      const rootDirectory = `./cli_storage/${githubInfo.repository}`
+      const totalLines = await traverseDirectory(rootDirectory)
+      const total_lines = totalLines[1] - totalLines[0]
+      const {pinned_dependencies, total_dependencies} =
+        await getPinnedDependencies(githubInfo.username, githubInfo.repository)
+      const reviewed_percentage = await getReviewedPercentage(
+        githubInfo.username,
+        githubInfo.repository,
+        personalAccessToken,
+      )
+
+      //calculate netscore and all metrics
+      const scores = await calculate_net_score(
+        contributor_commits,
+        total_lines,
+        issue_count,
+        totalLines[0],
+        repolicense,
+        days_since_last_commit,
+        npmPackageUrl,
+        pinned_dependencies,
+        total_dependencies,
+        reviewed_percentage,
+      )
+      return scores
     }
   } catch (error) {
     logBasedOnVerbosity(`Error: ${error.message}`, 2)
     process.exit(1)
   }
 }
-
-export {fetchGitHubInfo, readLines, countLinesInFile}
