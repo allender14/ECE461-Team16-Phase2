@@ -36,14 +36,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.countLinesInFile = exports.readLines = exports.fetchGitHubInfo = void 0;
-var axios = require('axios');
+exports.countLinesInFile = exports.readLines = exports.fetchGitHubInfo = exports.getCommitsPerContributor = void 0;
 var util = require('util');
 var exec = util.promisify(require('child_process').exec);
 var fs = require("fs");
 var path = require("path");
+var configDotenv = require("dotenv");
 var metrics_1 = require("./metrics");
 var logger_1 = require("./logger");
+var axios_1 = require("axios");
+configDotenv.config();
 var perPage = 100; // Number of contributors per page, GitHub API maximum is 100
 var perPage1 = 1; // We only need the latest commit
 function logBasedOnVerbosity(message, verbosity) {
@@ -92,64 +94,96 @@ function countLinesInFile(filePath) {
     });
 }
 exports.countLinesInFile = countLinesInFile;
+// Define your rate limiting constants.
+var MAX_REQUESTS_PER_HOUR = 5000; // GitHub GraphQL API limit for most authenticated users
+var REQUESTS_PER_MINUTE = 30; // A safe request rate
+// A simple rate limiting queue to control the request rate.
+var requestQueue = [];
+var isProcessing = false;
+function processQueue() {
+    return __awaiter(this, void 0, void 0, function () {
+        var request;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!(requestQueue.length > 0 && !isProcessing)) return [3 /*break*/, 3];
+                    isProcessing = true;
+                    request = requestQueue.shift();
+                    if (!request) return [3 /*break*/, 2];
+                    return [4 /*yield*/, request()];
+                case 1:
+                    _a.sent();
+                    _a.label = 2;
+                case 2:
+                    isProcessing = false;
+                    processQueue();
+                    _a.label = 3;
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+}
 function getCommitsPerContributor(getUsername, repositoryName, personalAccessToken) {
     var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function () {
-        var query, variables, response, data, refs, commitsPerContributor, _i, refs_1, ref, commits, _e, commits_1, commit, contributor, commitCountsArray, error_1;
+        var apiUrl, query, variables, response, refs, commitsPerContributor, _i, refs_1, ref, commits, _e, commits_1, commit, contributor, error_1;
         return __generator(this, function (_f) {
             switch (_f.label) {
                 case 0:
-                    _f.trys.push([0, 3, , 4]);
-                    query = "\n    query($owner: String!, $name: String!) {\n      repository(owner: $owner, name: $name) {\n        refs(first: 100, refPrefix: \"refs/\") {\n          nodes {\n            name\n            target {\n              ... on Commit {\n                history {\n                  totalCount\n                  nodes {\n                    author {\n                      user {\n                        login\n                      }\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n    ";
+                    _f.trys.push([0, 4, , 5]);
+                    apiUrl = 'https://api.github.com/graphql';
+                    query = "\n    query GetCommits($owner: String!, $name: String!) {\n      repository(owner: $owner, name: $name) {\n        refs(first: 50, refPrefix: \"refs/\") {\n          nodes {\n            name\n            target {\n              ... on Commit {\n                history {\n                  totalCount\n                  nodes {\n                    author {\n                      user {\n                        login\n                      }\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n    ";
                     variables = {
                         owner: getUsername,
                         name: repositoryName,
                     };
-                    return [4 /*yield*/, fetch('https://api.github.com/graphql', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: "Bearer ".concat(personalAccessToken),
-                            },
-                            body: JSON.stringify({ query: query, variables: variables }),
-                        })];
+                    if (!(requestQueue.length >= REQUESTS_PER_MINUTE)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, new Promise(function (resolve) { return requestQueue.push(resolve); })];
                 case 1:
+                    _f.sent();
+                    _f.label = 2;
+                case 2: return [4 /*yield*/, axios_1.default.post(apiUrl, {
+                        query: query,
+                        variables: variables,
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: "Bearer ".concat(personalAccessToken),
+                        },
+                    })];
+                case 3:
                     response = _f.sent();
-                    return [4 /*yield*/, response.json()];
-                case 2:
-                    data = _f.sent();
-                    //console.log(`${data},${response}`);
-                    //console.log(`${getUsername}, ${repositoryName}`);
-                    if (!data || !data.data || !data.data.repository) {
+                    if (!response.data ||
+                        !response.data.data ||
+                        !response.data.data.repository) {
                         throw new Error('Error fetching commits per contributor: Invalid response from GraphQL API');
                     }
-                    refs = data.data.repository.refs.nodes;
+                    refs = response.data.data.repository.refs.nodes;
                     commitsPerContributor = {};
                     for (_i = 0, refs_1 = refs; _i < refs_1.length; _i++) {
                         ref = refs_1[_i];
                         commits = ((_b = (_a = ref.target) === null || _a === void 0 ? void 0 : _a.history) === null || _b === void 0 ? void 0 : _b.nodes) || [];
                         for (_e = 0, commits_1 = commits; _e < commits_1.length; _e++) {
                             commit = commits_1[_e];
-                            contributor = ((_d = (_c = commit.author) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.login) || 'Unknown';
-                            if (!commitsPerContributor[contributor]) {
-                                commitsPerContributor[contributor] = 1;
-                            }
-                            else {
-                                commitsPerContributor[contributor]++;
+                            contributor = (_d = (_c = commit.author) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.login;
+                            if (contributor) {
+                                commitsPerContributor[contributor] =
+                                    (commitsPerContributor[contributor] || 0) + 1;
                             }
                         }
                     }
-                    commitCountsArray = Object.values(commitsPerContributor);
-                    return [2 /*return*/, commitCountsArray];
-                case 3:
+                    // Implement rate limiting: Allow the next request to proceed.
+                    processQueue();
+                    return [2 /*return*/, commitsPerContributor];
+                case 4:
                     error_1 = _f.sent();
-                    //console.error('Error fetching commits per contributor:', error);
                     throw error_1;
-                case 4: return [2 /*return*/];
+                case 5: return [2 /*return*/];
             }
         });
     });
 }
+exports.getCommitsPerContributor = getCommitsPerContributor;
 function getLatestCommit(getUsername, repositoryName) {
     return __awaiter(this, void 0, void 0, function () {
         var commitsUrl, latestCommitResponse, latestCommit, error_2;
@@ -158,7 +192,7 @@ function getLatestCommit(getUsername, repositoryName) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
                     commitsUrl = "https://api.github.com/repos/".concat(getUsername, "/").concat(repositoryName, "/commits?per_page=").concat(perPage1);
-                    return [4 /*yield*/, axios.get(commitsUrl)];
+                    return [4 /*yield*/, axios_1.default.get(commitsUrl)];
                 case 1:
                     latestCommitResponse = _a.sent();
                     latestCommit = latestCommitResponse.data[0];
@@ -213,18 +247,22 @@ function extractGitHubInfo(npmPackageUrl) {
                     _c.trys.push([0, 4, , 5]);
                     githubUrlPattern = /^https:\/\/github\.com\/([^/]+)\/([^/]+)(\/|$)/i;
                     if (!!githubUrlPattern.test(npmPackageUrl)) return [3 /*break*/, 2];
-                    npmUrlPattern = /^https?:\/\/(www\.)?npmjs\.com\/package\/([^/]+)/i;
+                    npmUrlPattern = /https:\/\/(www\.)?npmjs\.com\/package\/([^/?#]+)/;
                     npmUrlMatch = npmPackageUrl.match(npmUrlPattern);
+                    console.log('NPM URL Match:' + npmUrlMatch);
                     if (!npmUrlMatch || npmUrlMatch.length < 3) {
                         logBasedOnVerbosity('Invalid npm package URL', 2);
                         process.exit(1);
                     }
                     packageName = npmUrlMatch[2];
+                    console.log('Package Name: ' + packageName);
                     apiUrl = "https://registry.npmjs.org/".concat(packageName);
-                    return [4 /*yield*/, axios.get(apiUrl)];
+                    console.log('APIurl: ' + apiUrl);
+                    return [4 /*yield*/, axios_1.default.get(apiUrl)];
                 case 1:
                     response = _c.sent();
                     repositoryUrl = (_b = (_a = response.data) === null || _a === void 0 ? void 0 : _a.repository) === null || _b === void 0 ? void 0 : _b.url;
+                    console.log('RepoURL: ' + repositoryUrl);
                     if (!repositoryUrl) {
                         throw new Error('No GitHub repository URL found for the package.');
                     }
@@ -243,12 +281,14 @@ function extractGitHubInfo(npmPackageUrl) {
                         }
                         else {
                             logBasedOnVerbosity('Unable to extract GitHub username and repository name from the repository URL.', 2);
+                            console.log('Unable to extract GitHub username and repository name from the repository URL.');
                             process.exit(1);
                         }
                     }
                     return [3 /*break*/, 3];
                 case 2:
                     githubUrlMatch = npmPackageUrl.match(githubUrlPattern);
+                    console.log('GH url match: ' + githubUrlMatch);
                     if (githubUrlMatch && githubUrlMatch.length >= 3) {
                         username = githubUrlMatch[1];
                         repository = githubUrlMatch[2];
@@ -305,7 +345,7 @@ function cloneREPO(username, repository) {
 function addLists(list1, list2) {
     // Check if both lists have the same length
     if (list1.length !== list2.length) {
-        throw new Error("Lists must have the same length for element-wise addition.");
+        throw new Error('Lists must have the same length for element-wise addition.');
     }
     // Use the map function to add elements element-wise
     var resultList = list1.map(function (value, index) { return value + list2[index]; });
@@ -317,15 +357,18 @@ function traverseDirectory(dir) {
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    files = fs.readdirSync(dir);
+                    files = fs.readdirSync(dir) // Get all files and directories in the current directory
+                    ;
                     count = [0, 0];
                     _i = 0, files_1 = files;
                     _c.label = 1;
                 case 1:
                     if (!(_i < files_1.length)) return [3 /*break*/, 5];
                     file = files_1[_i];
-                    filePath = path.join(dir, file);
-                    stats = fs.statSync(filePath);
+                    filePath = path.join(dir, file) // Get the full path of the file or directory
+                    ;
+                    stats = fs.statSync(filePath) // Get file/directory stats
+                    ;
                     if (!stats.isDirectory()) return [3 /*break*/, 3];
                     _a = addLists;
                     _b = [count];
@@ -337,11 +380,11 @@ function traverseDirectory(dir) {
                 case 3:
                     if (stats.isFile()) {
                         // If it's a file, count the lines
-                        if (!(filePath.includes('.txt'))) {
+                        if (!filePath.includes('.txt')) {
                             fileLineCount = countLines(filePath);
                             count[1] += fileLineCount;
                         }
-                        if (filePath.includes("README.md")) {
+                        if (filePath.includes('README.md')) {
                             fileLineCount = countLines(filePath);
                             count[0] += fileLineCount;
                         }
@@ -372,19 +415,23 @@ function fetchGitHubInfo(npmPackageUrl, personalAccessToken) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 9, , 10]);
+                    _a.trys.push([0, 10, , 11]);
                     return [4 /*yield*/, extractGitHubInfo(npmPackageUrl)];
                 case 1:
                     githubInfo = _a.sent();
-                    if (!githubInfo) return [3 /*break*/, 8];
+                    if (!githubInfo) return [3 /*break*/, 9];
                     headers = {
                         Authorization: "Bearer ".concat(personalAccessToken),
                     };
                     axiosConfig = {
                         headers: headers,
                     };
+                    console.log('Github Username:' + githubInfo.username);
+                    console.log('Github Repo:' + githubInfo.repository);
                     url = "https://api.github.com/repos/".concat(githubInfo.username, "/").concat(githubInfo.repository);
-                    return [4 /*yield*/, axios.get(url, axiosConfig)];
+                    return [4 /*yield*/, axios_1.default.get(url, axiosConfig)
+                        //gather info
+                    ];
                 case 2:
                     response = _a.sent();
                     //gather info
@@ -394,11 +441,17 @@ function fetchGitHubInfo(npmPackageUrl, personalAccessToken) {
                     _a.sent();
                     return [4 /*yield*/, getTimeSinceLastCommit(githubInfo.username, githubInfo.repository, axiosConfig)];
                 case 4:
-                    days_since_last_commit = _a.sent();
+                    days_since_last_commit = (_a.sent());
+                    console.log('days since last commit: ' + days_since_last_commit);
                     issue_count = response.data.open_issues_count;
                     return [4 /*yield*/, getCommitsPerContributor(githubInfo.username, githubInfo.repository, personalAccessToken)];
                 case 5:
                     contributor_commits = _a.sent();
+                    if (!(contributor_commits === null)) return [3 /*break*/, 6];
+                    // Handle the error, e.g., log an error message or take appropriate action
+                    console.error('Error fetching commits per contributor');
+                    return [3 /*break*/, 9];
+                case 6:
                     repolicense = 'unlicense';
                     if (response.data.license) {
                         license = response.data.license;
@@ -414,20 +467,20 @@ function fetchGitHubInfo(npmPackageUrl, personalAccessToken) {
                     }
                     rootDirectory = "./cli_storage/".concat(githubInfo.repository);
                     return [4 /*yield*/, traverseDirectory(rootDirectory)];
-                case 6:
+                case 7:
                     totalLines = _a.sent();
                     total_lines = totalLines[1] - totalLines[0];
                     return [4 /*yield*/, (0, metrics_1.calculate_net_score)(contributor_commits, total_lines, issue_count, totalLines[0], repolicense, days_since_last_commit, npmPackageUrl)];
-                case 7:
+                case 8:
                     scores = _a.sent();
                     return [2 /*return*/, scores];
-                case 8: return [3 /*break*/, 10];
-                case 9:
+                case 9: return [3 /*break*/, 11];
+                case 10:
                     error_6 = _a.sent();
                     logBasedOnVerbosity("Error: ".concat(error_6.message), 2);
                     process.exit(1);
-                    return [3 /*break*/, 10];
-                case 10: return [2 /*return*/];
+                    return [3 /*break*/, 11];
+                case 11: return [2 /*return*/];
             }
         });
     });
