@@ -112,7 +112,7 @@ export async function getReviewedPercentage(
     const totalPullRequests = response.data.length
     const reviewedPullRequests = reviewedLines > 0 ? 1 : 0 // Assuming at least one line is reviewed
 
-    return (reviewedLines / totalLines) * 100
+    return (reviewedLines / totalLines)
   } catch (error) {
     console.error(`Error fetching reviewed lines percentage: ${error.message}`)
     throw error

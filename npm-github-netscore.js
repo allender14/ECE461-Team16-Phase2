@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+        while (_) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -35,7 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.fetchGitHubInfo = exports.getReviewedPercentage = exports.countLinesInFile = exports.readLines = void 0;
 var axios = require('axios');
 var util = require('util');
@@ -113,7 +113,7 @@ function getReviewedPercentage(owner, repo, personalAccessToken) {
                     return [4 /*yield*/, octokit.pulls.list({
                             owner: owner,
                             repo: repo,
-                            state: 'all',
+                            state: 'all'
                         })];
                 case 2:
                     response = _a.sent();
@@ -126,7 +126,7 @@ function getReviewedPercentage(owner, repo, personalAccessToken) {
                                     case 0: return [4 /*yield*/, octokit.pulls.listReviews({
                                             owner: owner,
                                             repo: repo,
-                                            pull_number: pullRequest.number,
+                                            pull_number: pullRequest.number
                                         })];
                                     case 1:
                                         reviewsResponse = _b.sent();
@@ -135,7 +135,7 @@ function getReviewedPercentage(owner, repo, personalAccessToken) {
                                         return [4 /*yield*/, octokit.pulls.listFiles({
                                                 owner: owner,
                                                 repo: repo,
-                                                pull_number: pullRequest.number,
+                                                pull_number: pullRequest.number
                                             })];
                                     case 2:
                                         filesResponse = _b.sent();
@@ -147,7 +147,7 @@ function getReviewedPercentage(owner, repo, personalAccessToken) {
                                     case 3: return [4 /*yield*/, octokit.pulls.get({
                                             owner: owner,
                                             repo: repo,
-                                            pull_number: pullRequest.number,
+                                            pull_number: pullRequest.number
                                         })];
                                     case 4:
                                         prResponse = _b.sent();
@@ -161,7 +161,7 @@ function getReviewedPercentage(owner, repo, personalAccessToken) {
                     totalPullRequests = response.data.length;
                     reviewedPullRequests = reviewedLines_1 > 0 ? 1 : 0 // Assuming at least one line is reviewed
                     ;
-                    return [2 /*return*/, (reviewedLines_1 / totalLines_1) * 100];
+                    return [2 /*return*/, (reviewedLines_1 / totalLines_1)];
                 case 4:
                     error_1 = _a.sent();
                     console.error("Error fetching reviewed lines percentage: ".concat(error_1.message));
@@ -207,7 +207,7 @@ function getCommitsPerContributor(getUsername, repositoryName, personalAccessTok
                     query = "\n    query GetCommits($owner: String!, $name: String!) {\n      repository(owner: $owner, name: $name) {\n        refs(first: 50, refPrefix: \"refs/\") {\n          nodes {\n            name\n            target {\n              ... on Commit {\n                history {\n                  totalCount\n                  nodes {\n                    author {\n                      user {\n                        login\n                      }\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n    ";
                     variables = {
                         owner: getUsername,
-                        name: repositoryName,
+                        name: repositoryName
                     };
                     if (!(requestQueue.length >= REQUESTS_PER_MINUTE)) return [3 /*break*/, 2];
                     return [4 /*yield*/, new Promise(function (resolve) { return requestQueue.push(resolve); })];
@@ -216,12 +216,12 @@ function getCommitsPerContributor(getUsername, repositoryName, personalAccessTok
                     _f.label = 2;
                 case 2: return [4 /*yield*/, axios.post(apiUrl, {
                         query: query,
-                        variables: variables,
+                        variables: variables
                     }, {
                         headers: {
                             'Content-Type': 'application/json',
-                            Authorization: "Bearer ".concat(personalAccessToken),
-                        },
+                            Authorization: "Bearer ".concat(personalAccessToken)
+                        }
                     })];
                 case 3:
                     response = _f.sent();
@@ -319,8 +319,8 @@ function getPinnedDependencies(username, repository) {
                     apiUrl = "https://api.github.com/repos/".concat(username, "/").concat(repository, "/contents/package.json");
                     return [4 /*yield*/, axios.get(apiUrl, {
                             headers: {
-                                Accept: 'application/vnd.github.v3.raw',
-                            },
+                                Accept: 'application/vnd.github.v3.raw'
+                            }
                         })];
                 case 1:
                     response = _c.sent();
@@ -542,10 +542,10 @@ function fetchGitHubInfo(npmPackageUrl, personalAccessToken) {
                     githubInfo = _b.sent();
                     if (!githubInfo) return [3 /*break*/, 10];
                     headers = {
-                        Authorization: "Bearer ".concat(personalAccessToken),
+                        Authorization: "Bearer ".concat(personalAccessToken)
                     };
                     axiosConfig = {
-                        headers: headers,
+                        headers: headers
                     };
                     console.log('Github Username:' + githubInfo.username);
                     console.log('Github Repo:' + githubInfo.repository);
