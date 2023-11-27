@@ -68,7 +68,7 @@ const UploadPage = () => {
       >
         {/* Add a button to go back to the homepage */}
         <Link to="/">
-            <Button variant="contained">Go Back to Homepage</Button>
+            <Button variant="outlined">Go Back to Homepage</Button>
         </Link>
         <Container maxWidth="sm">
           <Typography variant="h5" align="center" color="text.secondary" paragraph>
@@ -107,10 +107,11 @@ const UploadPage = () => {
               onChange={handleFileChange}
             />
           </div>
-
-          <Button onClick={handleFileUpload} disabled={files.length === 0} variant="contained">
-            Upload
-          </Button>
+          <Box sx={{ pt: 4 }}>
+            <Button onClick={handleFileUpload} disabled={files.length === 0} variant="contained">
+              Upload
+            </Button>
+          </Box>
         </Container>
       </Box>
     </ThemeProvider>
