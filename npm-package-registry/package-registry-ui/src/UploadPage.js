@@ -2,60 +2,77 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const UploadPage = () => {
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [fileName, setFileName] = useState('');
 
   const handleFileDrop = (event) => {
     event.preventDefault();
     const droppedFile = event.dataTransfer.files[0];
-    setFile(droppedFile);
+    addFile(droppedFile);
   }
 
-  const handleFileNameChange = (event) => {
-    setFileName(event.target.value);
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+    addFile(selectedFile);
+  }
+
+  const addFile = (newFile) => {
+    if (newFile) {
+      setFiles((prevFiles) => [...prevFiles, newFile]);
+      setFileName(newFile.name);
+    }
+  }
+
+  const removeFile = (index) => {
+    const updatedFiles = [...files];
+    updatedFiles.splice(index, 1);
+    setFiles(updatedFiles);
   }
 
   const handleFileUpload = () => {
-    if (file && fileName.trim() !== '') {
-      console.log(`Uploading file: ${file.name} with name: ${fileName}`);
-      setFile(null); // Clear the file input field
-      setFileName(''); // Clear the text box field
+    // Handle the upload logic for all files in the 'files' array
+    if (files.length > 0) {
+      console.log('Uploading files:', files.map((file) => file.name));
+      // Clear the files array and file name after upload
+      setFiles([]);
+      setFileName('');
     } else {
-      alert('Please provide a valid file and name.');
+      alert('Please provide at least one valid file.');
     }
   }
 
   return (
     <div>
       <h2>Upload Package</h2>
+
+      {/* Display the list of files above the drag-and-drop area */}
+      {files.length > 0 && (
+        <ul>
+          {files.map((file, index) => (
+            <li key={index}>
+              {file.name}
+              <button onClick={() => removeFile(index)}>Remove</button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <div
         className="upload-box"
         onDrop={handleFileDrop}
         onDragOver={(event) => event.preventDefault()}
         style={{ border: '2px dashed #cccccc', padding: '20px', textAlign: 'center' }}
       >
-        {file ? (
-          <p>{file.name}</p>
-        ) : (
-          <p>Drag your zipped package file here</p>
-        )}
+        <p>Drag your zipped package file here</p>
         <p>or</p>
         <input
           type="file"
           accept=".zip"
-          onChange={(event) => setFile(event.target.files[0])}
+          onChange={handleFileChange}
         />
       </div>
 
-      {/* Add a text box for the file name */}
-      <input
-        type="text"
-        value={fileName}
-        onChange={handleFileNameChange}
-        placeholder="Enter file name"
-      />
-
-      <button onClick={handleFileUpload} disabled={!file || fileName.trim() === ''}>Upload</button>
+      <button onClick={handleFileUpload} disabled={files.length === 0}>Upload</button>
 
       {/* Add a button to go back to the homepage */}
       <Link to="/">
