@@ -18,15 +18,15 @@ const SearchPage = () => {
   const handleSearch = () => {
     // Simulate search with mock data (replace with DynamoDB query later)
     const mockData = [
-      { packageName: 'PackageA', otherInfo: 'InfoA' },
-      { packageName: 'PackageB', otherInfo: 'InfoB' },
-      { packageName: 'PackageC', otherInfo: 'InfoC' },
+      { id: '197164276', name: 'Cloudinary', version: '7.2.1', readme: 'lots of text', rating: '{"URL":"https://github.com/cloudinary/cloudinary", "NET_SCORE":0.9, "RAMP_UP_SCORE":0.5, "CORRECTNESS_SCORE":0.7, "BUS_FACTOR_SCORE":0.3, "RESPONSIVE_MAINTAINER_SCORE":0.4, "LICENSE_SCORE":1, "DEPENDENCE SCORE:0.5, "REVIEWED_CODE_SCORE":0.19}'},
+      { id: '967481617', name: 'Nullivex', version: '3.29.1', readme: 'lots of text', rating: '{"URL":"https://github.com/nullivex/nodist", "NET_SCORE":0.4, "RAMP_UP_SCORE":0.2, "CORRECTNESS_SCORE":0.3, "BUS_FACTOR_SCORE":0.2, "RESPONSIVE_MAINTAINER_SCORE":0.9, "LICENSE_SCORE":1, "DEPENDENCE SCORE:0.8, "REVIEWED_CODE_SCORE":0.92}'},
+      { id: '418794191', name: 'Pino', version: '4.2.0', readme: 'lots of text', rating: '{"URL":"https://github.com/pinojs/pino", "NET_SCORE":0.6, "RAMP_UP_SCORE":0.3, "CORRECTNESS_SCORE":0.5, "BUS_FACTOR_SCORE":0.7, "RESPONSIVE_MAINTAINER_SCORE":0.1, "LICENSE_SCORE":0, "DEPENDENCE SCORE:0.4, "REVIEWED_CODE_SCORE":0.28}'}
     ];
 
     // Filter mock data based on search query
     const filteredResults = mockData.filter(
       (packageData) =>
-        packageData.packageName.toLowerCase().includes(searchQuery.toLowerCase())
+        packageData.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     setSearchResults(filteredResults);
@@ -51,8 +51,8 @@ const SearchPage = () => {
       >
         {/* Add "Back to Homepage" button */}
         <Link to="/" style={{ textDecoration: 'none' }}>
-          <Button variant="outlined" sx={{ mt: 3 }}>
-            Back to Homepage
+          <Button variant="outlined">
+            Back
           </Button>
         </Link>
         <Container maxWidth="sm">
@@ -78,12 +78,12 @@ const SearchPage = () => {
             <List sx={{ width: '100%' }}>
               {searchResults.map((result) => (
                 <ListItemButton
-                  key={result.packageName}
+                  key={result.name}
                   component={Link}
-                  to={`/packages/${result.packageName}`}
+                  to={`/packages/${result.name}`}
                   divider
                 >
-                  <ListItemText primary={`${result.packageName} - ${result.otherInfo}`} />
+                  <ListItemText primary={`${result.name}`} />
                 </ListItemButton>
               ))}
             </List>

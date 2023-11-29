@@ -19,9 +19,9 @@ const HomePage = () => {
   useEffect(() => {
     // Simulate fetching all packages from DynamoDB (replace with actual query later)
     const mockData = [
-      { packageName: 'PackageA', otherInfo: 'InfoA' },
-      { packageName: 'PackageB', otherInfo: 'InfoB' },
-      { packageName: 'PackageC', otherInfo: 'InfoC' },
+      { id: '197164276', name: 'Cloudinary', version: '7.2.1', readme: 'lots of text', rating: '{"URL":"https://github.com/cloudinary/cloudinary", "NET_SCORE":0.9, "RAMP_UP_SCORE":0.5, "CORRECTNESS_SCORE":0.7, "BUS_FACTOR_SCORE":0.3, "RESPONSIVE_MAINTAINER_SCORE":0.4, "LICENSE_SCORE":1, "DEPENDENCE SCORE:0.5, "REVIEWED_CODE_SCORE":0.19}'},
+      { id: '967481617', name: 'Nullivex', version: '3.29.1', readme: 'lots of text', rating: '{"URL":"https://github.com/nullivex/nodist", "NET_SCORE":0.4, "RAMP_UP_SCORE":0.2, "CORRECTNESS_SCORE":0.3, "BUS_FACTOR_SCORE":0.2, "RESPONSIVE_MAINTAINER_SCORE":0.9, "LICENSE_SCORE":1, "DEPENDENCE SCORE:0.8, "REVIEWED_CODE_SCORE":0.92}'},
+      { id: '418794191', name: 'Pino', version: '4.2.0', readme: 'lots of text', rating: '{"URL":"https://github.com/pinojs/pino", "NET_SCORE":0.6, "RAMP_UP_SCORE":0.3, "CORRECTNESS_SCORE":0.5, "BUS_FACTOR_SCORE":0.7, "RESPONSIVE_MAINTAINER_SCORE":0.1, "LICENSE_SCORE":0, "DEPENDENCE SCORE:0.4, "REVIEWED_CODE_SCORE":0.28}'},
     ];
 
     setPackageList(mockData);
@@ -49,20 +49,20 @@ const HomePage = () => {
               <Stack
                 sx={{ pt: 0 }}
                 direction="row"
-                spacing={10}
+                spacing={4}
                 justifyContent="center"
               >
                 <Link to="/upload">
-                  <Button variant="contained">Upload Package</Button>
+                  <Button variant="outlined">Upload Package</Button>
                 </Link>
                 <Link to="/update">
-                  <Button variant="contained">Update Package</Button>
+                  <Button variant="outlined">Update Package</Button>
                 </Link>
                 <Link to="/search">
-                  <Button variant="contained">Search Package</Button>
+                  <Button variant="outlined">Search Package</Button>
                 </Link>
                 <Link to="/rate">
-                  <Button variant="contained">Rate Package</Button>
+                  <Button variant="outlined">Rate Package</Button>
                 </Link>
               </Stack>
             </Container>
@@ -80,12 +80,12 @@ const HomePage = () => {
             <List>
               {packageList.map((packageData) => (
                 <ListItemButton
-                  key={packageData.packageName}
+                  key={packageData.id}
                   component={Link}
-                  to={`/packages/${packageData.packageName}`}
+                  to={`/packages/${packageData.name}`}
                   divider
                 >
-                  <ListItemText primary={`${packageData.packageName} - ${packageData.otherInfo}`} />
+                  <ListItemText primary={`${packageData.name}`} />
                 </ListItemButton>
               ))}
             </List>
