@@ -27,10 +27,6 @@ const RatePage = () => {
 
   const colors = ['#221f1f', '#242746', '#2e3233', '#263238', '#26324a', '#263264', '#2B3264', '#2E3264'];
 
-  const handleInputChange = (event) => {
-    setURL(event.target.value);
-  };
-
   // State to manage the visibility of scores
   const [showScores, setShowScores] = useState(false);
 

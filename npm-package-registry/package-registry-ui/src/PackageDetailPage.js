@@ -7,11 +7,29 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import DownloadIcon from '@mui/icons-material/Download';
 
 const PackageDetailPage = () => {
   const { packageName } = useParams();
   const defaultTheme = createTheme();
   const [packageInfo, setPackageInfo] = useState([]);
+  const [selectedTab, setSelectedTab] = useState(0);
+  const colors = ['#221f1f', '#242746', '#2e3233', '#263238', '#26324a', '#263264', '#2B3264', '#2E3264'];
+
+  const mockScores = {
+    NET_SCORE: 0.9,
+    RAMP_UP_SCORE: 0.5,
+    CORRECTNESS_SCORE: 0.7,
+    BUS_FACTOR_SCORE: 0.3,
+    RESPONSIVE_MAINTAINER_SCORE: 0.4,
+    LICENSE_SCORE: 1,
+    DEPENDENCE_SCORE: 0.5,
+    REVIEWED_CODE_SCORE: 0.3,
+  };
+
+  const [scores] = useState(mockScores);
 
   useEffect(() => {
     // Simulate fetching package details based on packageName (replace with actual query later)
@@ -30,12 +48,16 @@ const PackageDetailPage = () => {
     }
   }, [packageName]);
 
+  const handleTabChange = (event, newValue) => {
+    setSelectedTab(newValue);
+  };
+
   return (
     <ThemeProvider theme={defaultTheme}>
       <AppBar position="relative">
         <Toolbar>
           <Typography variant="h6" color="inherit" noWrap>
-            {packageInfo.name}
+            Package Information
           </Typography>
         </Toolbar>
       </AppBar>
@@ -53,13 +75,46 @@ const PackageDetailPage = () => {
             Back
           </Button>
         </Link>
-        <div>
-          <h2>Package Details</h2>
-          <p>Package Name: {packageInfo.name}</p>
-          <p>ID: {packageInfo.id}</p>
-          <p>Readme: {packageInfo.readme}</p>
-          <p>Rating: {packageInfo.rating}</p>
-        </div>
+        <Box sx={{ pt: 4 }}>
+          <Typography variant="h2">{packageInfo.name}</Typography>
+          <Typography variant="h5">{packageInfo.version} • Public • {packageInfo.id}</Typography>
+          <Tabs value={selectedTab} onChange={handleTabChange}>
+            <Tab label="Readme" />
+            <Tab label="Rating" />
+            <Tab label="Download" />
+          </Tabs>
+          <Box sx={{ p: 3 }}>
+            {selectedTab === 0 && (
+              <div>
+                {packageInfo.readme}
+              </div>
+            )}
+            {selectedTab === 1 && (
+              <div>
+                <Box sx={{ mt: 4 }}>
+                  {Object.entries(scores).map(([key, value], index) => (
+                    <div key={key} style={{ marginBottom: '30px' }}>
+                      <div key={key} style={{ marginBottom: '10px' }}>
+                        <div style={{ position: 'relative', backgroundColor: '#ddd', width: '100%', height: '40px', borderRadius: '5px', overflow: 'hidden' }}>
+                          <div style={{ width: `${value * 100}%`, backgroundColor: colors[index % colors.length], height: '100%' }}></div>
+                          <div style={{ position: 'absolute', top: '50%', left: '5px', transform: 'translateY(-50%)', color: 'white', zIndex: 1 }}>{key}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </Box>
+              </div>
+            )}
+            {selectedTab === 2 && (
+              <div>
+                <Button variant="contained">
+                  {packageInfo.name} v{packageInfo.version}  <DownloadIcon />
+                </Button>
+              </div>
+            )}
+            {/* Add more conditional rendering for other tabs */}
+          </Box>
+        </Box>
       </Box>
     </ThemeProvider>
   );

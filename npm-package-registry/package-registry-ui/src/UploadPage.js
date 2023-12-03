@@ -10,18 +10,26 @@ import Toolbar from '@mui/material/Toolbar';
 
 const UploadPage = () => {
   const [files, setFiles] = useState([]);
-  const [fileName, setFileName] = useState('');
+  const [setFileName] = useState('');
   const defaultTheme = createTheme();
 
   const handleFileDrop = (event) => {
     event.preventDefault();
     const droppedFile = event.dataTransfer.files[0];
-    addFile(droppedFile);
+    if (droppedFile && droppedFile.type === 'application/zip'){
+      addFile(droppedFile);
+    } else {
+      alert('Please provide a valid zip file.');
+    }
   }
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
-    addFile(selectedFile);
+    if (selectedFile && selectedFile.type === 'application/zip'){
+      addFile(selectedFile);
+    } else {
+      alert('Please provide a valid zip file.');
+    }
   }
 
   const addFile = (newFile) => {
@@ -68,7 +76,9 @@ const UploadPage = () => {
       >
         {/* Add a button to go back to the homepage */}
         <Link to="/">
-            <Button variant="outlined">Back</Button>
+            <Button variant="outlined">
+              Back
+            </Button>
         </Link>
         <Container maxWidth="sm">
           <Typography variant="h5" align="center" color="text.secondary" paragraph>
@@ -109,7 +119,7 @@ const UploadPage = () => {
           </div>
           <Box sx={{ pt: 4 }}>
             <Button onClick={handleFileUpload} disabled={files.length === 0} variant="contained">
-              Upload
+              Upload 
             </Button>
           </Box>
         </Container>

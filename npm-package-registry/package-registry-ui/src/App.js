@@ -14,7 +14,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/search" element={<SearchPage />} />
-          <Route path="/packages/:packageName" element={<PackageDetailPage />} />
+          <Route path="/package/:packageName" element={<PackageDetailPage />} />
           <Route path="/rate" element={<RatePage />} />
           {/* Add routes for other functionalities here */}
         </Routes>

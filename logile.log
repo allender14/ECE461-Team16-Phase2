@@ -28,3 +28,6 @@
 2023-10-31T20:43:42.392Z [DEBUG] debug: Error: response.json is not a function
 2023-10-31T20:47:42.158Z [DEBUG] debug: Error: response.json is not a function
 2023-10-31T20:58:47.665Z [DEBUG] debug: Error: You have exceeded a secondary rate limit. Please wait a few minutes before you try again. If you reach out to GitHub Support for help, please include the request ID CED8:12C9:5B966F1:BC3D2A7:65416A87.
+2023-11-27T23:13:09.291Z [DEBUG] debug: Error: Request failed with status code 401
+2023-11-27T23:15:20.025Z [DEBUG] debug: Error: Request failed with status code 401
+2023-11-28T01:32:12.397Z [DEBUG] debug: Error: Request failed with status code 401

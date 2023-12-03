@@ -55,9 +55,6 @@ const HomePage = () => {
                 <Link to="/upload">
                   <Button variant="outlined">Upload Package</Button>
                 </Link>
-                <Link to="/update">
-                  <Button variant="outlined">Update Package</Button>
-                </Link>
                 <Link to="/search">
                   <Button variant="outlined">Search Package</Button>
                 </Link>
@@ -82,7 +79,7 @@ const HomePage = () => {
                 <ListItemButton
                   key={packageData.id}
                   component={Link}
-                  to={`/packages/${packageData.name}`}
+                  to={`/package/${packageData.name}`}
                   divider
                 >
                   <ListItemText primary={`${packageData.name}`} />

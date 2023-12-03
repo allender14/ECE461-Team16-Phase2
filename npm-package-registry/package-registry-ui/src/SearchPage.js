@@ -80,7 +80,7 @@ const SearchPage = () => {
                 <ListItemButton
                   key={result.name}
                   component={Link}
-                  to={`/packages/${result.name}`}
+                  to={`/package/${result.name}`}
                   divider
                 >
                   <ListItemText primary={`${result.name}`} />
