@@ -11,30 +11,61 @@ import Container from '@mui/material/Container';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
+import AWS_CONFIG from './awsConfig';
 
 const HomePage = () => {
-  const [packageList, setPackageList] = useState([]);
   const defaultTheme = createTheme();
+  const [data, setData] = useState(null);
+  const [accessKey, setAccessKey] = useState('');
+  const [secretAccessKey, setSecretAccessKey] = useState('');
+
+  const handleLogout = () => {
+    setAccessKey('');
+    setSecretAccessKey('');
+
+    const updatedConfig = {
+      ...AWS_CONFIG,
+      accessKeyId: accessKey,
+      secretAccessKey: secretAccessKey,
+    };
+    Object.assign(AWS_CONFIG, updatedConfig);
+  };
 
   useEffect(() => {
-    // Simulate fetching all packages from DynamoDB (replace with actual query later)
-    const mockData = [
-      { id: '197164276', name: 'Cloudinary', version: '7.2.1', readme: 'lots of text', rating: '{"URL":"https://github.com/cloudinary/cloudinary", "NET_SCORE":0.9, "RAMP_UP_SCORE":0.5, "CORRECTNESS_SCORE":0.7, "BUS_FACTOR_SCORE":0.3, "RESPONSIVE_MAINTAINER_SCORE":0.4, "LICENSE_SCORE":1, "DEPENDENCE SCORE:0.5, "REVIEWED_CODE_SCORE":0.19}'},
-      { id: '967481617', name: 'Nullivex', version: '3.29.1', readme: 'lots of text', rating: '{"URL":"https://github.com/nullivex/nodist", "NET_SCORE":0.4, "RAMP_UP_SCORE":0.2, "CORRECTNESS_SCORE":0.3, "BUS_FACTOR_SCORE":0.2, "RESPONSIVE_MAINTAINER_SCORE":0.9, "LICENSE_SCORE":1, "DEPENDENCE SCORE:0.8, "REVIEWED_CODE_SCORE":0.92}'},
-      { id: '418794191', name: 'Pino', version: '4.2.0', readme: 'lots of text', rating: '{"URL":"https://github.com/pinojs/pino", "NET_SCORE":0.6, "RAMP_UP_SCORE":0.3, "CORRECTNESS_SCORE":0.5, "BUS_FACTOR_SCORE":0.7, "RESPONSIVE_MAINTAINER_SCORE":0.1, "LICENSE_SCORE":0, "DEPENDENCE SCORE:0.4, "REVIEWED_CODE_SCORE":0.28}'},
-    ];
+    const AWS = require('aws-sdk');
+    AWS.config.update({
+      accessKeyId: '',
+      secretAccessKey: '',
+      region: 'us-east-1'
+    });
 
-    setPackageList(mockData);
+    const dynamodb = new AWS.DynamoDB();
+
+    const params = {
+      TableName: 'registry'
+    };
+
+    dynamodb.scan(params, (err, responseData) => {
+      if (err) {
+        console.error('Error fetching data:', err);
+      } else {
+        console.log('Items retrieved:', responseData.Items);
+        setData(responseData);
+      }
+    });
   }, []);
 
   return (
     <div>
       <ThemeProvider theme={defaultTheme}>
         <AppBar position="relative">
-          <Toolbar>
+          <Toolbar sx={{ justifyContent: 'space-between' }}>
             <Typography variant="h6" color="inherit" noWrap>
               ACME Corporation Package Registry
             </Typography>
+            <Button color="inherit" onClick={handleLogout} component={Link} to="/">
+              Logout
+            </Button>
           </Toolbar>
         </AppBar>
         <main>
@@ -75,14 +106,14 @@ const HomePage = () => {
               Package Directory
             </Typography>
             <List>
-              {packageList.map((packageData) => (
+              {data && data.Items && data.Items.length > 0 && data.Items.map((item) => (
                 <ListItemButton
-                  key={packageData.id}
+                  key={item.id.S} // Assuming 'id' is a string attribute (use .S for string type)
                   component={Link}
-                  to={`/package/${packageData.name}`}
+                  to={`/package/${item.name.S}`} // Assuming 'name' is a string attribute
                   divider
                 >
-                  <ListItemText primary={`${packageData.name}`} />
+                  <ListItemText primary={`${item.name.S}`} /> {/* Display name */}
                 </ListItemButton>
               ))}
             </List>

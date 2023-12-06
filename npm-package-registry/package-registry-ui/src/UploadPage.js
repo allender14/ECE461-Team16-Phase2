@@ -75,7 +75,7 @@ const UploadPage = () => {
         }}
       >
         {/* Add a button to go back to the homepage */}
-        <Link to="/">
+        <Link to="/home">
             <Button variant="outlined">
               Back
             </Button>
