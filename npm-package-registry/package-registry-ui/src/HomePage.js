@@ -11,31 +11,31 @@ import Container from '@mui/material/Container';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
-import AWS_CONFIG from './awsConfig';
+//import AWS_CONFIG from './awsConfig';
 
 const HomePage = () => {
   const defaultTheme = createTheme();
   const [data, setData] = useState(null);
-  const [accessKey, setAccessKey] = useState('');
-  const [secretAccessKey, setSecretAccessKey] = useState('');
+  // const [accessKey, setAccessKey] = useState('');
+  // const [secretAccessKey, setSecretAccessKey] = useState('');
 
-  const handleLogout = () => {
-    setAccessKey('');
-    setSecretAccessKey('');
+  // const handleLogout = () => {
+  //   setAccessKey('');
+  //   setSecretAccessKey('');
 
-    const updatedConfig = {
-      ...AWS_CONFIG,
-      accessKeyId: accessKey,
-      secretAccessKey: secretAccessKey,
-    };
-    Object.assign(AWS_CONFIG, updatedConfig);
-  };
+  //   const updatedConfig = {
+  //     ...AWS_CONFIG,
+  //     accessKeyId: accessKey,
+  //     secretAccessKey: secretAccessKey,
+  //   };
+  //   Object.assign(AWS_CONFIG, updatedConfig);
+  // };
 
   useEffect(() => {
     const AWS = require('aws-sdk');
     AWS.config.update({
-      accessKeyId: '',
-      secretAccessKey: '',
+      accessKeyId: 'AKIA4GD5D2GBMAQ6WJPO',
+      secretAccessKey: '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',
       region: 'us-east-1'
     });
 
@@ -49,7 +49,6 @@ const HomePage = () => {
       if (err) {
         console.error('Error fetching data:', err);
       } else {
-        console.log('Items retrieved:', responseData.Items);
         setData(responseData);
       }
     });
@@ -63,7 +62,7 @@ const HomePage = () => {
             <Typography variant="h6" color="inherit" noWrap>
               ACME Corporation Package Registry
             </Typography>
-            <Button color="inherit" onClick={handleLogout} component={Link} to="/">
+            <Button color="inherit" /*onClick={handleLogout}*/ component={Link} to="/">
               Logout
             </Button>
           </Toolbar>

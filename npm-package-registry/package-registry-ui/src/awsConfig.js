@@ -1,7 +1,7 @@
 // awsConfig.js
 const AWS_CONFIG = {
-    accessKeyId: 'access',
-    secretAccessKey: 'secret',
+    accessKeyId: '',
+    secretAccessKey: '',
     region: 'us-east-1'
   };
   

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -7,11 +7,17 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
+import TextField from '@mui/material/TextField';
+import Grid from '@mui/material/Grid';
 
 const UploadPage = () => {
   const [files, setFiles] = useState([]);
-  const [setFileName] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [fileDescriptions, setFileDescriptions] = useState([]);
   const defaultTheme = createTheme();
+  let fileInputRef = useRef(null);
+  const AWS = require('aws-sdk');
+  const dynamodb = new AWS.DynamoDB();
 
   const handleFileDrop = (event) => {
     event.preventDefault();
@@ -43,12 +49,58 @@ const UploadPage = () => {
     const updatedFiles = [...files];
     updatedFiles.splice(index, 1);
     setFiles(updatedFiles);
+
+    const updatedDescriptions = [...fileDescriptions];
+    updatedDescriptions.splice(index, 1);
+    setFileDescriptions(updatedDescriptions);
+
+    // Reset the file input value to allow re-selection of the same file
+    if (fileInputRef && fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reset the input value
+    }
   }
+
+  const handleFileDescriptionChange = (index, description) => {
+    const updatedDescriptions = [...fileDescriptions];
+    updatedDescriptions[index] = description;
+    setFileDescriptions(updatedDescriptions);
+  }
+
+  AWS.config.update({
+    accessKeyId: 'AKIA4GD5D2GBMAQ6WJPO',
+    secretAccessKey: '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',
+    region: 'us-east-1'
+  });
 
   const handleFileUpload = () => {
     // Handle the upload logic for all files in the 'files' array
     if (files.length > 0) {
-      console.log('Uploading files:', files.map((file) => file.name));
+      for (let i = 0; i < files.length; i++) {
+        if (fileDescriptions[i] === undefined || fileDescriptions[i] === ''){
+            alert('Please provide a Name for each file.');
+          return;
+        }
+      }
+      for (let i = 0; i < files.length; i++) {
+        const item = {
+          TableName: 'registry',
+          Item: {
+            'id': { S: fileDescriptions[i].toLowerCase() },
+            'name': { S: (fileDescriptions[i] === '' ? fileName : fileDescriptions[i]) },
+            'version': { N: '1.0' },
+            'ratings': { S: 'Ratings data' } 
+          }
+        };
+
+        dynamodb.putItem(item, (err, data) => {
+          if (err) {
+            console.error('Error adding item:', err);
+          } else {
+            console.log('Item added successfully:', data);
+          }
+        });
+      }
+
       // Clear the files array and file name after upload
       setFiles([]);
       setFileName('');
@@ -90,12 +142,32 @@ const UploadPage = () => {
           {/* Display the list of files above the drag-and-drop area */}
           {files.length > 0 && (
             <ul>
-              {files.map((file, index) => (
-                <li key={index}>
-                  {file.name}
-                  <Button onClick={() => removeFile(index)}>Remove</Button>
-                </li>
-              ))}
+              {files.length > 0 && (
+                <Grid container spacing={2}>
+                  {files.map((file, index) => (
+                    <Grid item xs={10} key={index}>
+                      <Grid container alignItems="center" spacing={2}>
+                        <Grid item xs={2}>
+                          {file.name}
+                        </Grid>
+                        <Grid item xs={6}>
+                          <TextField
+                            label={fileName}
+                            value={fileDescriptions[index]}
+                            onChange={(e) => handleFileDescriptionChange(index, e.target.value)}
+                            margin="normal"
+                            variant="outlined"
+                            fullWidth
+                          />
+                        </Grid>
+                        <Grid item xs={2}>
+                          <Button onClick={() => removeFile(index)}>Remove</Button>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
             </ul>
           )}
 
@@ -115,6 +187,7 @@ const UploadPage = () => {
               type="file"
               accept=".zip"
               onChange={handleFileChange}
+              ref={fileInputRef}
             />
           </div>
           <Box sx={{ pt: 4 }}>

@@ -81,6 +81,7 @@ const PackageDetailPage = () => {
             <Tab label="Readme" />
             <Tab label="Rating" />
             <Tab label="Download" />
+            <Tab label="Delete" />
           </Tabs>
           <Box sx={{ p: 3 }}>
             {selectedTab === 0 && (
@@ -108,6 +109,13 @@ const PackageDetailPage = () => {
               <div>
                 <Button variant="contained">
                   {packageInfo.name} v{packageInfo.version}
+                </Button>
+              </div>
+            )}
+            {selectedTab === 3 && (
+              <div>
+                <Button variant="contained">
+                  Remove {packageInfo.name} From Package Registry
                 </Button>
               </div>
             )}
