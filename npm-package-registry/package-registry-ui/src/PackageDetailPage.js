@@ -26,8 +26,8 @@ const PackageDetailPage = () => {
   useEffect(() => {
     const AWS = require('aws-sdk');
     AWS.config.update({
-      accessKeyId: 'AKIA4GD5D2GBOUIRME6E',
-      secretAccessKey: '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',
+      accessKeyId: 'access',
+      secretAccessKey: 'secret',
       region: 'us-east-1'
     });
 
