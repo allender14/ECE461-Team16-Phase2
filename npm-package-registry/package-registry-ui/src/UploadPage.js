@@ -67,8 +67,8 @@ const UploadPage = () => {
   }
 
   AWS.config.update({
-    accessKeyId: 'AKIA4GD5D2GBMAQ6WJPO',
-    secretAccessKey: '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',
+    accessKeyId: 'AKIA4GD5D2GBOUIRME6E',
+    secretAccessKey: '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',
     region: 'us-east-1'
   });
 
@@ -87,8 +87,8 @@ const UploadPage = () => {
           Item: {
             'id': { S: fileDescriptions[i].toLowerCase() },
             'name': { S: (fileDescriptions[i] === '' ? fileName : fileDescriptions[i]) },
-            'version': { N: '1.0' },
-            'ratings': { S: 'Ratings data' } 
+            'version': { S: '1.0' },
+            'ratings': { S: '{ "RAMP_UP_SCORE" : 0.52, "NET_SCORE" : 0.5341, "BUS_FACTOR_SCORE" : 0.0816, "REVIEWED_CODE_SCORE" : 0.9471, "DEPENDENCE_SCORE" : 0, "RESPONSIVE_MAINTAINER_SCORE" : 0.2, "CORRECTNESS_SCORE" : 1, "LICENSE_SCORE" : 1, "DEPENDENCE_SCORE" : 0.5, "REVIEWED_CODE_SCORE" : 0.3,}' } 
           }
         };
 
@@ -152,7 +152,7 @@ const UploadPage = () => {
                         </Grid>
                         <Grid item xs={6}>
                           <TextField
-                            label={fileName}
+                            label="Enter Package Name"
                             value={fileDescriptions[index]}
                             onChange={(e) => handleFileDescriptionChange(index, e.target.value)}
                             margin="normal"

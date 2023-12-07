@@ -34,8 +34,8 @@ const HomePage = () => {
   useEffect(() => {
     const AWS = require('aws-sdk');
     AWS.config.update({
-      accessKeyId: 'AKIA4GD5D2GBMAQ6WJPO',
-      secretAccessKey: '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',
+      accessKeyId: 'AKIA4GD5D2GBOUIRME6E',
+      secretAccessKey: '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',
       region: 'us-east-1'
     });
 

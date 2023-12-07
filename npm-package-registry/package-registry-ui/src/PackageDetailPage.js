@@ -13,43 +13,48 @@ import Tab from '@mui/material/Tab';
 const PackageDetailPage = () => {
   const { packageName } = useParams();
   const defaultTheme = createTheme();
-  const [packageInfo, setPackageInfo] = useState([]);
   const [selectedTab, setSelectedTab] = useState(0);
   const colors = ['#221f1f', '#242746', '#2e3233', '#263238', '#26324a', '#263264', '#2B3264', '#2E3264'];
-
-  const mockScores = {
-    NET_SCORE: 0.9,
-    RAMP_UP_SCORE: 0.5,
-    CORRECTNESS_SCORE: 0.7,
-    BUS_FACTOR_SCORE: 0.3,
-    RESPONSIVE_MAINTAINER_SCORE: 0.4,
-    LICENSE_SCORE: 1,
-    DEPENDENCE_SCORE: 0.5,
-    REVIEWED_CODE_SCORE: 0.3,
-  };
-
-  const [scores] = useState(mockScores);
-
-  useEffect(() => {
-    // Simulate fetching package details based on packageName (replace with actual query later)
-    const mockData = [
-      { id: '197164276', name: 'print', version: '7.2.1', readme: 'lots of text', rating: '{"URL":"https://github.com/cloudinary/cloudinary", "NET_SCORE":0.9, "RAMP_UP_SCORE":0.5, "CORRECTNESS_SCORE":0.7, "BUS_FACTOR_SCORE":0.3, "RESPONSIVE_MAINTAINER_SCORE":0.4, "LICENSE_SCORE":1, "DEPENDENCE SCORE":0.5, "REVIEWED_CODE_SCORE":0.19}'},
-      { id: '967481617', name: 'Nullivex', version: '3.29.1', readme: 'lots of text', rating: '{"URL":"https://github.com/nullivex/nodist", "NET_SCORE":0.4, "RAMP_UP_SCORE":0.2, "CORRECTNESS_SCORE":0.3, "BUS_FACTOR_SCORE":0.2, "RESPONSIVE_MAINTAINER_SCORE":0.9, "LICENSE_SCORE":1, "DEPENDENCE SCORE":0.8, "REVIEWED_CODE_SCORE":0.92}'},
-      { id: '418794191', name: 'Pino', version: '4.2.0', readme: 'lots of text', rating: '{"URL":"https://github.com/pinojs/pino", "NET_SCORE":0.6, "RAMP_UP_SCORE":0.3, "CORRECTNESS_SCORE":0.5, "BUS_FACTOR_SCORE":0.7, "RESPONSIVE_MAINTAINER_SCORE":0.1, "LICENSE_SCORE":0, "DEPENDENCE SCORE":0.4, "REVIEWED_CODE_SCORE":0.28}'}
-    ];
-
-    const selectedPackage = mockData.find(pkg => pkg.name === packageName);
-    if (selectedPackage) {
-      setPackageInfo(selectedPackage);
-    } else {
-      // Handle case where package details for the given name are not found
-      setPackageInfo({ name: 'Package Not Found', id: '', readme: '', rating: '', version: '' });
-    }
-  }, [packageName]);
+  const ratings = ['RAMP_UP_SCORE', 'NET_SCORE', 'BUS_FACTOR_SCORE', 'REVIEWED_CODE_SCORE', 'DEPENDENCE_SCORE', 
+    'RESPONSIVE_MAINTAINER_SCORE', 'CORRECTNESS_SCORE', 'LICENSE_SCORE', 'DEPENDENCE_SCORE', 'REVIEWED_CODE_SCORE']
+  const [data, setData] = useState(null);
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
   };
+
+  useEffect(() => {
+    const AWS = require('aws-sdk');
+    AWS.config.update({
+      accessKeyId: 'AKIA4GD5D2GBOUIRME6E',
+      secretAccessKey: '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',
+      region: 'us-east-1'
+    });
+
+    const dynamodb = new AWS.DynamoDB();
+
+    const params = {
+      TableName: 'registry'
+    };
+
+    dynamodb.scan(params, (err, responseData) => {
+      if (err) {
+        console.error('Error fetching data:', err);
+      } else {
+        const foundItem = responseData.Items.find(item => item.name.S === packageName);
+        setData(foundItem);
+      }
+    });
+  }, [packageName]);
+
+  let ratingArray = [];
+  if (data && data.ratings && typeof data.ratings.S === 'string') {
+    const matches = data.ratings.S.match(/\d+(\.\d+)?/g);
+    
+    if (matches) {
+      ratingArray = matches.map(value => Number(value));
+    }
+  }
 
   return (
     <ThemeProvider theme={defaultTheme}>
@@ -75,8 +80,8 @@ const PackageDetailPage = () => {
           </Button>
         </Link>
         <Box sx={{ pt: 4 }}>
-          <Typography variant="h2">{packageInfo.name}</Typography>
-          <Typography variant="h5">{packageInfo.version} • Public • {packageInfo.id}</Typography>
+          <Typography variant="h2">{data ? data.name.S : 'Loading...'}</Typography>
+          <Typography variant="h5">{data ? data.version.S: 'Loading...'} • Public • {data ? data.id.S : 'Loading...'}</Typography>
           <Tabs value={selectedTab} onChange={handleTabChange}>
             <Tab label="Readme" />
             <Tab label="Rating" />
@@ -86,37 +91,46 @@ const PackageDetailPage = () => {
           <Box sx={{ p: 3 }}>
             {selectedTab === 0 && (
               <div>
-                {packageInfo.readme}
+                temp readme
               </div>
             )}
             {selectedTab === 1 && (
               <div>
-                <Box sx={{ mt: 4 }}>
-                  {Object.entries(scores).map(([key, value], index) => (
-                    <div key={key} style={{ marginBottom: '30px' }}>
-                      <div key={key} style={{ marginBottom: '10px' }}>
-                        <div style={{ position: 'relative', backgroundColor: '#ddd', width: '100%', height: '40px', borderRadius: '5px', overflow: 'hidden' }}>
-                          <div style={{ width: `${value * 100}%`, backgroundColor: colors[index % colors.length], height: '100%' }}></div>
-                          <div style={{ position: 'absolute', top: '50%', left: '5px', transform: 'translateY(-50%)', color: 'white', zIndex: 1 }}>{key}</div>
+                {(data && ratings.length === ratingArray.length) ? (
+                  <Box sx={{ mt: 4 }}>
+                    {ratings.map((ratingName, index) => (
+                      <div key={ratingName} style={{ marginBottom: '30px' }}>
+                        <div style={{ marginBottom: '10px' }}>
+                          <div style={{ position: 'relative', backgroundColor: '#ddd', width: '100%', height: '40px', borderRadius: '5px', overflow: 'hidden' }}>
+                            <div style={{ width: `${ratingArray[index] * 100}%`, backgroundColor: colors[index % colors.length], height: '100%' }}></div>
+                            <div style={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '5px',
+                              transform: 'translateY(-50%)',
+                              color: 'white',
+                              zIndex: 1,
+                              textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+                              // Adjust the text shadow values for the desired outline effect
+                            }}>{ratingName}</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </Box>
+                    ))}
+                  </Box>
+                ) : (
+                  <div>Ratings Not Available</div>
+                )}
               </div>
             )}
             {selectedTab === 2 && (
               <div>
-                <Button variant="contained">
-                  {packageInfo.name} v{packageInfo.version}
-                </Button>
+                temp download
               </div>
             )}
             {selectedTab === 3 && (
               <div>
-                <Button variant="contained">
-                  Remove {packageInfo.name} From Package Registry
-                </Button>
+                temp delete
               </div>
             )}
             {/* Add more conditional rendering for other tabs */}
