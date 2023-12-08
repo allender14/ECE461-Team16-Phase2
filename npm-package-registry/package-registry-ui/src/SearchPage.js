@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -14,19 +14,36 @@ const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const defaultTheme = createTheme();
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    const AWS = require('aws-sdk');
+    AWS.config.update({
+      accessKeyId: sessionStorage.getItem('accessKey'),
+      secretAccessKey: sessionStorage.getItem('secretAccessKey'),
+      region: 'us-east-1'
+    });
+
+    const dynamodb = new AWS.DynamoDB();
+
+    const params = {
+      TableName: 'registry'
+    };
+
+    dynamodb.scan(params, (err, responseData) => {
+      if (err) {
+        console.error('Error fetching data:', err);
+      } else {
+        setData(responseData);
+      }
+    });
+  }, []);
 
   const handleSearch = () => {
-    // Simulate search with mock data (replace with DynamoDB query later)
-    const mockData = [
-      { id: '197164276', name: 'Cloudinary', version: '7.2.1', readme: 'lots of text', rating: '{"URL":"https://github.com/cloudinary/cloudinary", "NET_SCORE":0.9, "RAMP_UP_SCORE":0.5, "CORRECTNESS_SCORE":0.7, "BUS_FACTOR_SCORE":0.3, "RESPONSIVE_MAINTAINER_SCORE":0.4, "LICENSE_SCORE":1, "DEPENDENCE SCORE:0.5, "REVIEWED_CODE_SCORE":0.19}'},
-      { id: '967481617', name: 'Nullivex', version: '3.29.1', readme: 'lots of text', rating: '{"URL":"https://github.com/nullivex/nodist", "NET_SCORE":0.4, "RAMP_UP_SCORE":0.2, "CORRECTNESS_SCORE":0.3, "BUS_FACTOR_SCORE":0.2, "RESPONSIVE_MAINTAINER_SCORE":0.9, "LICENSE_SCORE":1, "DEPENDENCE SCORE:0.8, "REVIEWED_CODE_SCORE":0.92}'},
-      { id: '418794191', name: 'Pino', version: '4.2.0', readme: 'lots of text', rating: '{"URL":"https://github.com/pinojs/pino", "NET_SCORE":0.6, "RAMP_UP_SCORE":0.3, "CORRECTNESS_SCORE":0.5, "BUS_FACTOR_SCORE":0.7, "RESPONSIVE_MAINTAINER_SCORE":0.1, "LICENSE_SCORE":0, "DEPENDENCE SCORE:0.4, "REVIEWED_CODE_SCORE":0.28}'}
-    ];
-
     // Filter mock data based on search query
-    const filteredResults = mockData.filter(
+    const filteredResults = data.Items.filter(
       (packageData) =>
-        packageData.name.toLowerCase().includes(searchQuery.toLowerCase())
+        packageData.name.S.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     setSearchResults(filteredResults);
@@ -78,12 +95,12 @@ const SearchPage = () => {
             <List sx={{ width: '100%' }}>
               {searchResults.map((result) => (
                 <ListItemButton
-                  key={result.name}
+                  key={result.name.S}
                   component={Link}
-                  to={`/package/${result.name}`}
+                  to={`/package/${result.name.S}`}
                   divider
                 >
-                  <ListItemText primary={`${result.name}`} />
+                  <ListItemText primary={`${result.name.S}`} />
                 </ListItemButton>
               ))}
             </List>

@@ -6,6 +6,7 @@ import SearchPage from './SearchPage';
 import PackageDetailPage from './PackageDetailPage';
 import RatePage from './RatePage';
 import LoginPage from './LoginPage';
+import DeletePage from './DeletePage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/package/:packageName" element={<PackageDetailPage />} />
           <Route path="/rate" element={<RatePage />} />
+          <Route path="/delete" element={<DeletePage />} />
           {/* Add routes for other functionalities here */}
         </Routes>
       </div>

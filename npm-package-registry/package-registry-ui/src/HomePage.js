@@ -16,26 +16,22 @@ import ListItemText from '@mui/material/ListItemText';
 const HomePage = () => {
   const defaultTheme = createTheme();
   const [data, setData] = useState(null);
-  // const [accessKey, setAccessKey] = useState('');
-  // const [secretAccessKey, setSecretAccessKey] = useState('');
+  const [accessKey, setAccessKey] = useState('');
+  const [secretAccessKey, setSecretAccessKey] = useState('');
 
-  // const handleLogout = () => {
-  //   setAccessKey('');
-  //   setSecretAccessKey('');
+  const handleLogout = () => {
+    setAccessKey('');
+    setSecretAccessKey('');
 
-  //   const updatedConfig = {
-  //     ...AWS_CONFIG,
-  //     accessKeyId: accessKey,
-  //     secretAccessKey: secretAccessKey,
-  //   };
-  //   Object.assign(AWS_CONFIG, updatedConfig);
-  // };
+    sessionStorage.setItem('accessKey', accessKey);
+    sessionStorage.setItem('secretAccessKey', secretAccessKey);
+  };
 
   useEffect(() => {
     const AWS = require('aws-sdk');
     AWS.config.update({
-      accessKeyId: 'AKIA4GD5D2GBOUIRME6E',
-      secretAccessKey: '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',
+      accessKeyId: sessionStorage.getItem('accessKey'),
+      secretAccessKey: sessionStorage.getItem('secretAccessKey'),
       region: 'us-east-1'
     });
 
@@ -62,7 +58,7 @@ const HomePage = () => {
             <Typography variant="h6" color="inherit" noWrap>
               ACME Corporation Package Registry
             </Typography>
-            <Button color="inherit" /*onClick={handleLogout}*/ component={Link} to="/">
+            <Button color="inherit" onClick={handleLogout} component={Link} to="/">
               Logout
             </Button>
           </Toolbar>
@@ -90,6 +86,9 @@ const HomePage = () => {
                 </Link>
                 <Link to="/rate">
                   <Button variant="outlined">Rate Package</Button>
+                </Link>
+                <Link to="/delete">
+                  <Button variant="outlined">Delete Package</Button>
                 </Link>
               </Stack>
             </Container>

@@ -67,8 +67,8 @@ const UploadPage = () => {
   }
 
   AWS.config.update({
-    accessKeyId: 'AKIA4GD5D2GBOUIRME6E',
-    secretAccessKey: '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',
+    accessKeyId: sessionStorage.getItem('accessKey'),
+    secretAccessKey: sessionStorage.getItem('secretAccessKey'),
     region: 'us-east-1'
   });
 
@@ -88,7 +88,7 @@ const UploadPage = () => {
             'id': { S: fileDescriptions[i].toLowerCase() },
             'name': { S: (fileDescriptions[i] === '' ? fileName : fileDescriptions[i]) },
             'version': { S: '1.0' },
-            'ratings': { S: '{ "RAMP_UP_SCORE" : 0.52, "NET_SCORE" : 0.5341, "BUS_FACTOR_SCORE" : 0.0816, "REVIEWED_CODE_SCORE" : 0.9471, "DEPENDENCE_SCORE" : 0, "RESPONSIVE_MAINTAINER_SCORE" : 0.2, "CORRECTNESS_SCORE" : 1, "LICENSE_SCORE" : 1, "DEPENDENCE_SCORE" : 0.5, "REVIEWED_CODE_SCORE" : 0.3,}' } 
+            'ratings': { S: '{ "URL": "github.com/pinojs/pino", "NET_SCORE" : 0.52, "RAMP_UP_SCORE" : 0.5341, "CORRECTNESS_SCORE" : 0.0816, "BUS_FACTOR_SCORE" : 0.9471, "RESPONSIVE_MAINTAINER_SCORE" : 0.2, "LICENSE_SCORE" : 1, "DEPENDENCE_SCORE" : 0.5, "REVIEWED_CODE_SCORE" : 0.3,}' } 
           }
         };
 

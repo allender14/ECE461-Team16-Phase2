@@ -10,7 +10,6 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Container from '@mui/material/Container';
 import { Link } from 'react-router-dom';
-import AWS_CONFIG from './awsConfig';
 
 const LoginForm = () => {
   const [accessKey, setAccessKey] = useState('');
@@ -25,19 +24,11 @@ const LoginForm = () => {
     setSecretAccessKey(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleFormSubmit = (e) => {
     e.preventDefault();
-    e.preventDefault();
-    // Update the AWS credentials in awsConfig.js
-    const updatedConfig = {
-      ...AWS_CONFIG,
-      accessKeyId: accessKey,
-      secretAccessKey: secretAccessKey,
-    };
-    // Update the AWS_CONFIG object with the new credentials
-    // This assumes that AWS_CONFIG is a mutable object, not a frozen constant
-    Object.assign(AWS_CONFIG, updatedConfig);
-    console.log('AWS credentials updated:', updatedConfig);
+
+    sessionStorage.setItem('accessKey', accessKey);
+    sessionStorage.setItem('secretAccessKey', secretAccessKey);
   };
 
   return (
@@ -61,7 +52,7 @@ const LoginForm = () => {
           <Typography variant="h5" align="center" color="text.secondary" paragraph>
             Enter your AWS credentials
           </Typography>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleFormSubmit}>
             <TextField
               label="Access Key ID"
               value={accessKey}
@@ -78,17 +69,22 @@ const LoginForm = () => {
               margin="normal"
               variant="outlined"
             />
-            <Link to="/home">
-              <Button
+            <Button
               type="submit"
               variant="contained"
               fullWidth
               sx={{ mt: 2 }}
               >
               Login
+            </Button>
+          </form>
+          {sessionStorage.getItem('accessKey') && sessionStorage.getItem('secretAccessKey') && (
+            <Link to="/home" style={{ textDecoration: 'none' }}>
+              <Button variant="outlined" sx={{ mt: 2 }}>
+                Home
               </Button>
             </Link>
-          </form>
+          )}
         </Container>
       </Box>
     </ThemeProvider>

@@ -15,8 +15,8 @@ const PackageDetailPage = () => {
   const defaultTheme = createTheme();
   const [selectedTab, setSelectedTab] = useState(0);
   const colors = ['#221f1f', '#242746', '#2e3233', '#263238', '#26324a', '#263264', '#2B3264', '#2E3264'];
-  const ratings = ['RAMP_UP_SCORE', 'NET_SCORE', 'BUS_FACTOR_SCORE', 'REVIEWED_CODE_SCORE', 'DEPENDENCE_SCORE', 
-    'RESPONSIVE_MAINTAINER_SCORE', 'CORRECTNESS_SCORE', 'LICENSE_SCORE', 'DEPENDENCE_SCORE', 'REVIEWED_CODE_SCORE']
+  const ratings = ['NET SCORE', 'RAMP UP SCORE', 'CORRECTNESS SCORE', 'BUS FACTOR SCORE', 
+    'RESPONSIVE MAINTAINER SCORE', 'LICENSE SCORE', 'DEPENDENCE_ CORE', 'REVIEWED CODE SCORE']
   const [data, setData] = useState(null);
 
   const handleTabChange = (event, newValue) => {
@@ -26,8 +26,8 @@ const PackageDetailPage = () => {
   useEffect(() => {
     const AWS = require('aws-sdk');
     AWS.config.update({
-      accessKeyId: 'AKIA4GD5D2GBOUIRME6E',
-      secretAccessKey: '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',
+      accessKeyId: sessionStorage.getItem('accessKey'),
+      secretAccessKey: sessionStorage.getItem('secretAccessKey'),
       region: 'us-east-1'
     });
 
@@ -119,7 +119,7 @@ const PackageDetailPage = () => {
                     ))}
                   </Box>
                 ) : (
-                  <div>Ratings Not Available</div>
+                  <div>Loading...</div>
                 )}
               </div>
             )}
@@ -130,7 +130,11 @@ const PackageDetailPage = () => {
             )}
             {selectedTab === 3 && (
               <div>
-                temp delete
+                <Link to="/home">
+                  <Button variant="contained">
+                    Temp Delete
+                  </Button>
+                </Link>
               </div>
             )}
             {/* Add more conditional rendering for other tabs */}
