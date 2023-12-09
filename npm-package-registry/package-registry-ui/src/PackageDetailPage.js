@@ -73,12 +73,11 @@ const PackageDetailPage = () => {
           px: 4,
         }}
       >
-        {/* Add "Back to Homepage" button */}
-        <Link to="/home" style={{ textDecoration: 'none' }}>
+        {/* <Link to="/home" style={{ textDecoration: 'none' }}>
           <Button variant="outlined">
             Back
           </Button>
-        </Link>
+        </Link> */}
         <Box sx={{ pt: 4 }}>
           <Typography variant="h2">{data ? data.name.S : 'Loading...'}</Typography>
           <Typography variant="h5">{data ? data.version.S: 'Loading...'} • Public • {data ? data.id.S : 'Loading...'}</Typography>

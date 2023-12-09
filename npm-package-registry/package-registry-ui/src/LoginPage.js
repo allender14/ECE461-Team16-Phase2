@@ -1,6 +1,4 @@
-// LoginForm.js
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -14,6 +12,7 @@ import { Link } from 'react-router-dom';
 const LoginForm = () => {
   const [accessKey, setAccessKey] = useState('');
   const [secretAccessKey, setSecretAccessKey] = useState('');
+  const [credentialsSet, setCredentialsSet] = useState(false); // State to track if credentials are set
   const defaultTheme = createTheme();
 
   const handleAccessKeyChange = (e) => {
@@ -29,7 +28,15 @@ const LoginForm = () => {
 
     sessionStorage.setItem('accessKey', accessKey);
     sessionStorage.setItem('secretAccessKey', secretAccessKey);
+    setCredentialsSet(true); // Update state to indicate credentials are set
   };
+
+  useEffect(() => {
+    // Check session storage on initial load to display Home button
+    if (sessionStorage.getItem('accessKey') && sessionStorage.getItem('secretAccessKey')) {
+      setCredentialsSet(true);
+    }
+  }, []);
 
   return (
     <ThemeProvider theme={defaultTheme}>
@@ -74,11 +81,11 @@ const LoginForm = () => {
               variant="contained"
               fullWidth
               sx={{ mt: 2 }}
-              >
+            >
               Login
             </Button>
           </form>
-          {sessionStorage.getItem('accessKey') && sessionStorage.getItem('secretAccessKey') && (
+          {credentialsSet && ( // Show Home button when credentials are set
             <Link to="/home" style={{ textDecoration: 'none' }}>
               <Button variant="outlined" sx={{ mt: 2 }}>
                 Home

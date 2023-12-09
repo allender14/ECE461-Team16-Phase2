@@ -87,9 +87,6 @@ const HomePage = () => {
                 <Link to="/rate">
                   <Button variant="outlined">Rate Package</Button>
                 </Link>
-                <Link to="/delete">
-                  <Button variant="outlined">Delete Package</Button>
-                </Link>
               </Stack>
             </Container>
           </Box>
