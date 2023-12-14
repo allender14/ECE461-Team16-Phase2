@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -35,13 +35,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-exports.__esModule = true;
-exports.calculate_net_score = exports.calculate_responsiveness = exports.calculate_license = exports.calculate_ramp_up_time = exports.calculate_correctness = exports.calculate_bus_factor = void 0;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.calculate_net_score = exports.calculate_dependence = exports.calculate_responsiveness = exports.calculate_license = exports.calculate_ramp_up_time = exports.calculate_correctness = exports.calculate_bus_factor = void 0;
 //Metric 1
 function calculate_bus_factor(contributor_commits) {
     return __awaiter(this, void 0, void 0, function () {
         var key_contributor, total_contributors, max, min, i, midrange, i;
         return __generator(this, function (_a) {
+            console.log('contributor_commits: ' + contributor_commits);
             key_contributor = 0;
             total_contributors = contributor_commits.length;
             max = 0;
@@ -61,7 +62,9 @@ function calculate_bus_factor(contributor_commits) {
                     key_contributor++;
                 }
             }
-            if ((key_contributor / total_contributors) >= 1) {
+            console.log('key_contributor: ' + key_contributor);
+            console.log('total_contributors: ' + total_contributors);
+            if (key_contributor / total_contributors >= 1) {
                 return [2 /*return*/, 1];
             }
             else {
@@ -115,71 +118,71 @@ function calculate_license(license_type) {
                 license_type = license_type.toLowerCase();
             }
             switch (license_type) {
-                case "afl-3.0":
+                case 'afl-3.0':
                     return [2 /*return*/, 0.8]; //open-source, requires attribution and inclusion of license
-                case "apache-2.0":
+                case 'apache-2.0':
                     return [2 /*return*/, 0.7]; //open-source, requires attribution and preservation and disclaimer
-                case "artistic-2.0":
-                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation 
-                case "bsl-1.0":
-                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation 
-                case "bsd-2-clause":
-                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation 
-                case "bsd-3-clause":
-                    return [2 /*return*/, 0.7]; //open-source, requires attribution and preservation and disclaimer
-                case "bsd-3-clause-clear":
-                    return [2 /*return*/, 0.7]; //open-source, requires attribution and preservation and disclaimer
-                case "bsd-4-clause":
-                    return [2 /*return*/, 0.6]; //open-source, requires attribution, preservation, disclaimer and notification
-                case "0bsd":
-                    return [2 /*return*/, 1]; // No restrictions
-                case "cc0-1.0":
-                    return [2 /*return*/, 1]; // No restrictions
-                case "cc-by-4.0":
-                    return [2 /*return*/, 0.9]; //open-source, requires attribution 
-                case "cc-by-sa-4.0":
-                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation 
-                case "wtfpl":
-                    return [2 /*return*/, 1]; // Minimal restrictions
-                case "ecl-2.0":
-                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation 
-                case "epl-1.0":
-                    return [2 /*return*/, 0.8]; //open-source, requires disclaimer and preservation 
-                case "epl-2.0":
-                    return [2 /*return*/, 0.8]; //same as epl-1.0
-                case "eupl-1.1":
-                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation 
-                case "agpl-3.0":
-                    return [2 /*return*/, 0.9]; //Requires that modified versions are made available to users of the software over a network.
-                case "gpl-2.0":
-                    return [2 /*return*/, 0.9]; //Requires preservation of licesnse for derivative works
-                case "gpl-3.0":
-                    return [2 /*return*/, 0.9]; //same as gpl-2.0
-                case "lgpl-2.1":
-                    return [2 /*return*/, 1]; // Low restrictions
-                case "lgpl-3.0":
-                    return [2 /*return*/, 1]; // same as lgpl-2.1
-                case "isc":
-                    return [2 /*return*/, 1]; // Minimal restrictions
-                case "lppl-1.3c":
-                    return [2 /*return*/, 0.9]; //open-source, requires attribution 
-                case "ms-pl":
-                    return [2 /*return*/, 0.9]; //open-source, requires attribution 
-                case "mit license":
-                    return [2 /*return*/, 1]; // Minimal restrictions
-                case "mpl-2.0":
-                    return [2 /*return*/, 0.7]; // Conditions on source code modifications and copyleft provisions
-                case "osl-3.0":
-                    return [2 /*return*/, 0.6]; //open-source, requires attribution, preservation, disclaimer and copyleft
-                case "postgresql":
-                    return [2 /*return*/, 0.8]; //open-source, requires attribution and disclaimers
-                case "ofl-1.1":
+                case 'artistic-2.0':
                     return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation
-                case "ncsa":
+                case 'bsl-1.0':
+                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation
+                case 'bsd-2-clause':
+                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation
+                case 'bsd-3-clause':
+                    return [2 /*return*/, 0.7]; //open-source, requires attribution and preservation and disclaimer
+                case 'bsd-3-clause-clear':
+                    return [2 /*return*/, 0.7]; //open-source, requires attribution and preservation and disclaimer
+                case 'bsd-4-clause':
+                    return [2 /*return*/, 0.6]; //open-source, requires attribution, preservation, disclaimer and notification
+                case '0bsd':
+                    return [2 /*return*/, 1]; // No restrictions
+                case 'cc0-1.0':
+                    return [2 /*return*/, 1]; // No restrictions
+                case 'cc-by-4.0':
+                    return [2 /*return*/, 0.9]; //open-source, requires attribution
+                case 'cc-by-sa-4.0':
+                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation
+                case 'wtfpl':
+                    return [2 /*return*/, 1]; // Minimal restrictions
+                case 'ecl-2.0':
+                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation
+                case 'epl-1.0':
+                    return [2 /*return*/, 0.8]; //open-source, requires disclaimer and preservation
+                case 'epl-2.0':
+                    return [2 /*return*/, 0.8]; //same as epl-1.0
+                case 'eupl-1.1':
+                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation
+                case 'agpl-3.0':
+                    return [2 /*return*/, 0.9]; //Requires that modified versions are made available to users of the software over a network.
+                case 'gpl-2.0':
+                    return [2 /*return*/, 0.9]; //Requires preservation of licesnse for derivative works
+                case 'gpl-3.0':
+                    return [2 /*return*/, 0.9]; //same as gpl-2.0
+                case 'lgpl-2.1':
+                    return [2 /*return*/, 1]; // Low restrictions
+                case 'lgpl-3.0':
+                    return [2 /*return*/, 1]; // same as lgpl-2.1
+                case 'isc':
+                    return [2 /*return*/, 1]; // Minimal restrictions
+                case 'lppl-1.3c':
+                    return [2 /*return*/, 0.9]; //open-source, requires attribution
+                case 'ms-pl':
+                    return [2 /*return*/, 0.9]; //open-source, requires attribution
+                case 'mit license':
+                    return [2 /*return*/, 1]; // Minimal restrictions
+                case 'mpl-2.0':
+                    return [2 /*return*/, 0.7]; // Conditions on source code modifications and copyleft provisions
+                case 'osl-3.0':
+                    return [2 /*return*/, 0.6]; //open-source, requires attribution, preservation, disclaimer and copyleft
+                case 'postgresql':
+                    return [2 /*return*/, 0.8]; //open-source, requires attribution and disclaimers
+                case 'ofl-1.1':
+                    return [2 /*return*/, 0.8]; //open-source, requires attribution and preservation
+                case 'ncsa':
                     return [2 /*return*/, 0.7]; //open-source, requires attribution, preservation and disclaimers
-                case "unlicense":
+                case 'unlicense':
                     return [2 /*return*/, 1];
-                case "zlib":
+                case 'zlib':
                     return [2 /*return*/, 0.8]; //open-source, requires attribution and disclaimers
                 default:
                     return [2 /*return*/, 0];
@@ -193,22 +196,28 @@ exports.calculate_license = calculate_license;
 function calculate_responsiveness(days_since_last_commit) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
-            if (days_since_last_commit <= 7) { //within a week
+            if (days_since_last_commit <= 7) {
+                //within a week
                 return [2 /*return*/, 1];
             }
-            else if (days_since_last_commit <= 14) { //within 2 weeks
+            else if (days_since_last_commit <= 14) {
+                //within 2 weeks
                 return [2 /*return*/, 0.8];
             }
-            else if (days_since_last_commit <= 30) { //within a month
+            else if (days_since_last_commit <= 30) {
+                //within a month
                 return [2 /*return*/, 0.6];
             }
-            else if (days_since_last_commit <= 60) { //within 2 months
+            else if (days_since_last_commit <= 60) {
+                //within 2 months
                 return [2 /*return*/, 0.4];
             }
-            else if (days_since_last_commit <= 180) { //within 6 months
+            else if (days_since_last_commit <= 180) {
+                //within 6 months
                 return [2 /*return*/, 0.2];
             }
-            else { // more than 6 months
+            else {
+                // more than 6 months
                 return [2 /*return*/, 0];
             }
             return [2 /*return*/];
@@ -216,10 +225,21 @@ function calculate_responsiveness(days_since_last_commit) {
     });
 }
 exports.calculate_responsiveness = calculate_responsiveness;
-//Net_Score
-function calculate_net_score(contributor_commits, lines_of_code, num_issues, lines_of_readme, license_type, days_since_last_commit, npmPackageUrl) {
+function calculate_dependence(pinned_dependencies, total_dependencies) {
     return __awaiter(this, void 0, void 0, function () {
-        var bus_factor, correctness, ramp_up_time, license, responsiveness, net_score, NET_SCORE, RAMP_UP_SCORE, CORRECTNESS_SCORE, BUS_FACTOR_SCORE, RESPONSIVE_MAINTAINER_SCORE, LICENSE_SCORE, output;
+        return __generator(this, function (_a) {
+            if (total_dependencies == 0) {
+                return [2 /*return*/, 1];
+            }
+            return [2 /*return*/, pinned_dependencies / total_dependencies];
+        });
+    });
+}
+exports.calculate_dependence = calculate_dependence;
+//Net_Score
+function calculate_net_score(contributor_commits, lines_of_code, num_issues, lines_of_readme, license_type, days_since_last_commit, npmPackageUrl, pinned_dependencies, total_dependencies, reviewed_percentage) {
+    return __awaiter(this, void 0, void 0, function () {
+        var bus_factor, correctness, ramp_up_time, license, responsiveness, dependence, net_score;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, calculate_bus_factor(contributor_commits)];
@@ -237,35 +257,63 @@ function calculate_net_score(contributor_commits, lines_of_code, num_issues, lin
                     return [4 /*yield*/, calculate_responsiveness(days_since_last_commit)];
                 case 5:
                     responsiveness = _a.sent();
-                    net_score = 0.25 * bus_factor + 1.25 * correctness + 1 * ramp_up_time + 0.5 * license + 2 * responsiveness;
-                    NET_SCORE = (Math.floor(net_score / 5 * 10000) / 10000);
-                    RAMP_UP_SCORE = Math.floor(ramp_up_time * 10000) / 10000;
-                    CORRECTNESS_SCORE = Math.floor(correctness * 10000) / 10000;
-                    BUS_FACTOR_SCORE = Math.floor(bus_factor * 10000) / 10000;
-                    RESPONSIVE_MAINTAINER_SCORE = Math.floor(responsiveness * 10000) / 10000;
-                    LICENSE_SCORE = Math.floor(license * 10000) / 10000;
-                    output = [{
-                            URL: npmPackageUrl,
-                            NET_SCORE: Math.floor(net_score / 5 * 10000) / 10000,
-                            RAMP_UP_SCORE: Math.floor(ramp_up_time * 10000) / 10000,
-                            CORRECTNESS_SCORE: Math.floor(correctness * 10000) / 10000,
-                            BUS_FACTOR_SCORE: Math.floor(bus_factor * 10000) / 10000,
-                            RESPONSIVE_MAINTAINER_SCORE: Math.floor(responsiveness * 10000) / 10000,
-                            LICENSE_SCORE: Math.floor(license * 10000) / 10000
-                        }
-                    ];
+                    return [4 /*yield*/, calculate_dependence(pinned_dependencies, total_dependencies)];
+                case 6:
+                    dependence = _a.sent();
+                    net_score = 0.05 * bus_factor +
+                        0.15 * correctness +
+                        0.15 * ramp_up_time +
+                        0.1 * license +
+                        0.3 * responsiveness +
+                        0.1 * dependence +
+                        0.15 * reviewed_percentage;
+                    //return each const metric score and net score
+                    // const  NET_SCORE: number = (Math.floor(net_score / 5 * 10000) / 10000);
+                    // const  RAMP_UP_SCORE: number = Math.floor(ramp_up_time * 10000) / 10000;
+                    // const  CORRECTNESS_SCORE: number =  Math.floor(correctness * 10000) / 10000;
+                    // const  BUS_FACTOR_SCORE: number = Math.floor(bus_factor * 10000) / 10000;
+                    // const  RESPONSIVE_MAINTAINER_SCORE: number = Math.floor(responsiveness * 10000) / 10000;
+                    // const  LICENSE_SCORE: number = Math.floor(license * 10000) / 10000;
+                    // const  DEPENDENCE_SCORE: number = Math.floor(dependence * 10000) / 10000;
+                    // const  REVIEWED_CODE_SCORE: number = Math.floor(reviewed_code * 10000) / 10000;      DONT UNDERSTAND PURPOSE OF THIS CODE
+                    // const output = [{
+                    //     URL: npmPackageUrl,
+                    //     NET_SCORE: Math.floor(net_score / 5 * 10000) / 10000,
+                    //     RAMP_UP_SCORE: Math.floor(ramp_up_time * 10000) / 10000,
+                    //     CORRECTNESS_SCORE: Math.floor(correctness * 10000) / 10000,
+                    //     BUS_FACTOR_SCORE: Math.floor(bus_factor * 10000) / 10000,
+                    //     RESPONSIVE_MAINTAINER_SCORE: Math.floor(responsiveness * 10000) / 10000,
+                    //     LICENSE_SCORE: Math.floor(license * 10000) / 10000,
+                    //     DEPENDENCE_SCORE: Math.floor(dependence * 10000) / 10000,
+                    //     REVIEWED_CODE_SCORE: Math.floor(dependence * 10000) / 1000
+                    // }
+                    // ]
                     console.log(JSON.stringify({
                         URL: npmPackageUrl,
-                        NET_SCORE: NET_SCORE,
-                        RAMP_UP_SCORE: RAMP_UP_SCORE,
-                        CORRECTNESS_SCORE: CORRECTNESS_SCORE,
-                        BUS_FACTOR_SCORE: BUS_FACTOR_SCORE,
-                        RESPONSIVE_MAINTAINER_SCORE: RESPONSIVE_MAINTAINER_SCORE,
-                        LICENSE_SCORE: LICENSE_SCORE
+                        NET_SCORE: Math.floor(net_score * 10000) / 10000,
+                        RAMP_UP_SCORE: Math.floor(ramp_up_time * 10000) / 10000,
+                        CORRECTNESS_SCORE: Math.floor(correctness * 10000) / 10000,
+                        BUS_FACTOR_SCORE: Math.floor(bus_factor * 10000) / 10000,
+                        RESPONSIVE_MAINTAINER_SCORE: Math.floor(responsiveness * 10000) / 10000,
+                        LICENSE_SCORE: Math.floor(license * 10000) / 10000,
+                        DEPENDENCE_SCORE: Math.floor(dependence * 10000) / 10000,
+                        REVIEWED_CODE_SCORE: Math.floor(reviewed_percentage * 10000) / 10000,
                     }));
                     //console.log(`${printign}`);
                     //process.stdout.write(printign);
-                    return [2 /*return*/, 1];
+                    return [2 /*return*/, 1
+                        /*const ndjsonEntry = {
+                              URL: npmPackageUrl,
+                              NetScore: Math.floor(net_score * 10) / 10,
+                              RampUp: Math.floor(ramp_up_time * 10) / 10,
+                              Correctness:  Math.floor(correctness * 10) / 10,
+                              BusFactor: Math.floor(bus_factor * 10),
+                              ResponsiveMaintainer: Math.floor(responsiveness * 10) / 10,
+                              License: Math.floor(license * 10) / 10,
+                          };
+                          const ndjsonOutput = JSON.stringify(ndjsonEntry);
+                          return ndjsonOutput; */
+                    ];
             }
         });
     });

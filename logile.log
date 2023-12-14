@@ -3,3 +3,31 @@
 2023-09-25T06:44:56.384Z [DEBUG] debug: Error: Request failed with status code 401
 2023-09-25T07:43:17.064Z [DEBUG] debug: Error: Request failed with status code 401
 2023-09-25T07:43:25.133Z [DEBUG] debug: Error: Request failed with status code 401
+2023-10-22T22:27:10.241Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T22:36:30.024Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T22:47:47.628Z [DEBUG] debug: Error extracting GitHub info: Request failed with status code 404
+2023-10-22T22:48:04.848Z [DEBUG] debug: Error extracting GitHub info: Request failed with status code 404
+2023-10-22T22:51:10.838Z [DEBUG] debug: Error extracting GitHub info: Request failed with status code 404
+2023-10-22T22:52:10.141Z [DEBUG] debug: Error extracting GitHub info: Request failed with status code 404
+2023-10-22T22:53:11.184Z [DEBUG] debug: Error extracting GitHub info: Request failed with status code 404
+2023-10-22T22:56:26.949Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T22:57:15.413Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T22:58:16.799Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T22:59:24.415Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T23:00:39.907Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T23:01:19.881Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T23:04:44.199Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T23:07:23.089Z [DEBUG] debug: Error: Error fetching commits per contributor: Invalid response from GraphQL API
+2023-10-22T23:29:21.644Z [DEBUG] debug: Error: Cannot read properties of null (reading 'length')
+2023-10-31T19:09:58.995Z [DEBUG] debug: Error: Error fetching commits per contributor: 502 - Bad Gateway
+2023-10-31T19:20:08.254Z [DEBUG] debug: Error: Request failed with status code 502
+2023-10-31T19:25:32.901Z [DEBUG] debug: Error: Request failed with status code 502
+2023-10-31T20:25:04.877Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:31:52.336Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:37:46.497Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:43:42.392Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:47:42.158Z [DEBUG] debug: Error: response.json is not a function
+2023-10-31T20:58:47.665Z [DEBUG] debug: Error: You have exceeded a secondary rate limit. Please wait a few minutes before you try again. If you reach out to GitHub Support for help, please include the request ID CED8:12C9:5B966F1:BC3D2A7:65416A87.
+2023-11-27T23:13:09.291Z [DEBUG] debug: Error: Request failed with status code 401
+2023-11-27T23:15:20.025Z [DEBUG] debug: Error: Request failed with status code 401
+2023-11-28T01:32:12.397Z [DEBUG] debug: Error: Request failed with status code 401
